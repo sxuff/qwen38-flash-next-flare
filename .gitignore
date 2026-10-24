@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+# Benchmark output
+agents.json
+turns.json
+live-metrics*.jsonl

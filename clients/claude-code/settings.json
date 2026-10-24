@@ -1,0 +1,12 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:18000",
+    "ANTHROPIC_AUTH_TOKEN": "local",
+    "ANTHROPIC_MODEL": "qwen38-flash-next-flare",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "qwen38-flash-next-flare",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "qwen38-flash-next-flare",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen38-flash-next-flare",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "qwen38-flash-next-flare",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1"
+  }
+}
