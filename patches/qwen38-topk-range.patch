@@ -2,8 +2,8 @@ Lets requests set top-k between 1 and 20 on the Qwen3.8 Flash Next package. The 
 parameter, and Flare rejects temperature 0, so greedy decoding is unavailable; with this range, top-k 1 keeps only the
 highest-scoring token. Defaults stay at temperature 1.0, top-p 0.95, top-k 20.
 
-Applies to NVIDIA/flare-local-inference at 1fd1f917fcf2b0a48068e1f9e58be8db2165b383. The patched file is part of
-Flare's Ignition and remains under the Apache License 2.0.
+Applies to NVIDIA/flare-local-inference at ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c (and 1fd1f917). The patched file is
+part of Flare's Ignition and remains under the Apache License 2.0.
 
 diff --git a/ignition/recipes/qwen38/recipe.py b/ignition/recipes/qwen38/recipe.py
 index 76baedc..93931e2 100644

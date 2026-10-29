@@ -7,7 +7,13 @@
 #   start-flare.sh --no-create  exit 3 instead of creating the server
 set -e
 . "$(dirname "$0")/config.sh"
-CMD="$FLARE_BIN run '$PACKAGE' --gpus 0 --served-model-name $SERVED_NAME --host $HOST --port $PORT $SERVE_FLAGS 2>&1 | tee $RUN_LOG; echo FLARE_EXITED >> $RUN_LOG"
+require_package
+DISK_FLAGS=
+if [ "$PREFIX_CACHE_DISK_LIMIT" != 0 ]; then
+  mkdir -p "$PREFIX_CACHE_DISK"
+  DISK_FLAGS="--prefix-cache-disk '$PREFIX_CACHE_DISK' --prefix-cache-disk-limit $PREFIX_CACHE_DISK_LIMIT"
+fi
+CMD="FLARE_PREFILL_PRIORITY=$PREFILL_PRIORITY $FLARE_BIN run '$PACKAGE' --gpus 0 --served-model-name $SERVED_NAME --host $HOST --port $PORT $SERVE_FLAGS $DISK_FLAGS 2>&1 | tee $RUN_LOG; echo FLARE_EXITED >> $RUN_LOG"
 
 spid=$(tmux -L flare display-message -p -t flare '#{pid}' 2>/dev/null || true)
 if [ -n "$spid" ]; then

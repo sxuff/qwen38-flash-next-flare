@@ -1,0 +1,26 @@
+Lets Ignition export Qwen packages with mixed prefill again. Since bce032c0 (Oct 24) the native exporter requires an
+explicit draft depth on every speculative graph, but Ignition gives mixed prefill graphs none (its GraphSignature
+rejects one), so `--mixed-prefill` exports fail at the last step with "speculative graph lacks explicit proposal
+depth". This restores the exporter's earlier default for mixed graphs only: width minus one, which is what the
+package loader checks against. Speculative graphs still need their explicit depth.
+
+Applies to NVIDIA/flare-local-inference at ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c. The patched file is part of
+Flare's Heliopause and remains under the Apache License 2.0.
+
+diff --git a/heliopause/src/export/binding.rs b/heliopause/src/export/binding.rs
+index 07add1e9..3bd35d13 100644
+--- a/heliopause/src/export/binding.rs
++++ b/heliopause/src/export/binding.rs
+@@ -187,7 +187,11 @@ pub(crate) fn execution(
+             .unwrap_or(false);
+         if kind == "speculative" || kind == "mixed" && speculative {
+             if !graph.contains_key("draft_tokens") {
+-                return Err(super::invalid("speculative graph lacks explicit proposal depth"));
++                // Mixed graphs carry no explicit depth from preparation; use the pre-ABI4 default.
++                if kind != "mixed" {
++                    return Err(super::invalid("speculative graph lacks explicit proposal depth"));
++                }
++                graph.insert("draft_tokens".into(), width.saturating_sub(1).into());
+             }
+             graph.insert("verify_tokens".into(), width.into());
+             graph.insert("draft_source".into(), "MTP".into());
