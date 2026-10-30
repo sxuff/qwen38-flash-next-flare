@@ -10,7 +10,7 @@ The files come from the Flare checkout set up by scripts/setup.sh (FLARE_SRC), i
 .venv, which is how the recipe's results were measured; the pinned commit and uv lockfile make
 the workload identical on another machine.
 """
-import json, os, threading, time, urllib.request
+import json, os, subprocess, threading, time, urllib.parse, urllib.request
 from pathlib import Path
 
 BASE = "http://127.0.0.1:8000"
@@ -53,6 +53,7 @@ def post_stream(messages, seed):
     t0 = time.monotonic()
     first = last = first_count = finish = None
     usage = {}
+    max_gap = 0.0  # longest wait between content chunks after the first token: a stall while others prefill
     with urllib.request.urlopen(req, timeout=900) as resp:
         for raw in resp:
             line = raw.decode().strip()
@@ -68,6 +69,8 @@ def post_stream(messages, seed):
                 if any(v for k, v in delta.items() if k != "role"):
                     if first is None:
                         first, first_count = now, usage.get("completion_tokens")
+                    else:
+                        max_gap = max(max_gap, now - last)
                     last = now
     end = time.monotonic()
     comp = usage.get("completion_tokens")
@@ -79,7 +82,7 @@ def post_stream(messages, seed):
         decode = (comp - first_count) / (last - first)
     return {"t0": t0, "end": end, "ttft_s": (first - t0) if first else None, "latency_s": end - t0, "decode_tps": decode,
             "prompt_tokens": usage.get("prompt_tokens"), "cached_tokens": cached, "completion_tokens": comp,
-            "finish_reason": finish}
+            "finish_reason": finish, "max_gap_s": max_gap}
 
 
 def session(level, rep, sid, chunks, start_at, rows, lock):
@@ -94,13 +97,24 @@ def session(level, rep, sid, chunks, start_at, rows, lock):
         row = {"level": level, "rep": rep, "session": sid, "turn": turn, "file": path,
                "start_s": r["t0"] - start_at, "end_s": r["end"] - start_at}
         row.update({k: r[k] for k in ("ttft_s", "latency_s", "decode_tps", "prompt_tokens", "cached_tokens",
-                                      "completion_tokens", "finish_reason")})
+                                      "completion_tokens", "finish_reason", "max_gap_s")})
         row["new_prompt_tokens"] = (row["prompt_tokens"] or 0) - row["cached_tokens"]
         with lock:
             rows.append(row)
 
 
-def run_level(level, rep, rows):
+def gpu_processes():
+    """Compute processes on this machine's GPUs, or None without nvidia-smi."""
+    try:
+        out = subprocess.run(["nvidia-smi", "--query-compute-apps=pid,name", "--format=csv,noheader"],
+                             capture_output=True, text=True, timeout=30, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def run_level(level, rep, rows, watch_gpu):
+    """Run one level; returns the GPU process lists seen with more than one process (the server alone is one)."""
     lock = threading.Lock()
     start_at = time.monotonic() + 0.5
     threads = []
@@ -110,8 +124,13 @@ def run_level(level, rep, rows):
         th = threading.Thread(target=session, args=(level, rep, sid, chunks, start_at, rows, lock))
         th.start()
         threads.append(th)
-    for th in threads:
-        th.join()
+    shared = set()
+    while alive := [th for th in threads if th.is_alive()]:
+        procs = gpu_processes() if watch_gpu else None
+        if procs and len(procs) > 1:
+            shared.add("; ".join(procs))
+        alive[0].join(5)
+    return sorted(shared)
 
 
 if __name__ == "__main__":
@@ -123,10 +142,17 @@ if __name__ == "__main__":
     ap.add_argument("--base", default=BASE)
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--sampling-json", default="{}", help="extra sampling fields sent with every request")
+    ap.add_argument("--allow-busy-gpu", action="store_true",
+                    help="run even when another process besides the server uses the GPU")
     args = ap.parse_args()
     LEVELS, REPS, OUT = args.levels, args.reps, args.out
     BASE, MODEL, SAMPLING = args.base, args.model, json.loads(args.sampling_json)
     assert len(CHUNKS) >= sum(LEVELS) * REPS * TURNS, len(CHUNKS)
+    # Another GPU job during a run skews every number, so a server on this machine must have the GPU to itself.
+    watch_gpu = urllib.parse.urlsplit(BASE).hostname in ("127.0.0.1", "localhost", "::1")
+    procs = gpu_processes() if watch_gpu else None
+    if procs and len(procs) > 1 and not args.allow_busy_gpu:
+        raise SystemExit("The GPU is shared: " + "; ".join(procs) + ". Stop the other process or pass --allow-busy-gpu.")
     # Warm the shared system prompt once, as a running agent fleet would have it cached.
     warm = post_stream([{"role": "system", "content": SYSTEM}, {"role": "user", "content": "Ready?"}], seed=1)
     print("warmup", {k: warm[k] for k in ("prompt_tokens", "cached_tokens", "latency_s")}, flush=True)
@@ -134,11 +160,15 @@ if __name__ == "__main__":
     for rep in range(1, REPS + 1):
         for level in LEVELS:
             n0 = len(rows)
-            run_level(level, rep, rows)
+            shared = run_level(level, rep, rows, watch_gpu)
             lv = rows[n0:]
             wall = max(r["end_s"] for r in lv)
             out_tps = sum(r["completion_tokens"] for r in lv) / wall
             print(f"rep {rep} level {level}: {len(lv)} turns, wall {wall:.1f}s, output {out_tps:.1f} tok/s", flush=True)
+            if shared:
+                print("  WARNING: the GPU was shared during this level:", " | ".join(shared), flush=True)
+                for r in lv:
+                    r["gpu_shared"] = shared
             time.sleep(5)
     OUT.write_text(json.dumps(rows, indent=1))
     print("ALL_DONE", len(rows), flush=True)

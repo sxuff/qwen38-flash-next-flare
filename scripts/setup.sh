@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build Flare and Ignition at the pinned commit with the recipe patch applied.
+# Build Flare and Ignition at the pinned commit with the recipe patches applied.
 set -euo pipefail
 . "$(dirname "$0")/config.sh"
 
@@ -22,18 +22,20 @@ if [ ! -d "$FLARE_SRC/.git" ]; then
 fi
 git -C "$FLARE_SRC" checkout --quiet "$FLARE_COMMIT"
 
-PATCH="$RECIPE_DIR/patches/qwen38-topk-range.patch"
-if git -C "$FLARE_SRC" apply --check "$PATCH" 2>/dev/null; then
-  git -C "$FLARE_SRC" apply "$PATCH"
-  echo "Applied $(basename "$PATCH")"
-elif git -C "$FLARE_SRC" apply --reverse --check "$PATCH" 2>/dev/null; then
-  echo "$(basename "$PATCH") is already applied"
-else
-  echo "$(basename "$PATCH") does not apply to $FLARE_SRC; is it at $FLARE_COMMIT?"
-  exit 1
-fi
+for PATCH in "$RECIPE_DIR"/patches/*.patch; do
+  if git -C "$FLARE_SRC" apply --check "$PATCH" 2>/dev/null; then
+    git -C "$FLARE_SRC" apply "$PATCH"
+    echo "Applied $(basename "$PATCH")"
+  elif git -C "$FLARE_SRC" apply --reverse --check "$PATCH" 2>/dev/null; then
+    echo "$(basename "$PATCH") is already applied"
+  else
+    echo "$(basename "$PATCH") does not apply to $FLARE_SRC; is it at $FLARE_COMMIT?"
+    exit 1
+  fi
+done
 
 cd "$FLARE_SRC"
-uv sync --locked --extra prepare --extra test
+# uv does not notice source changes in the native exporter, so rebuild it with the patch every time.
+uv sync --locked --extra prepare --extra test --reinstall-package flare-heliopause
 cargo build --release --manifest-path flare/Cargo.toml
 echo "Built $("$FLARE_BIN" --version) at ${FLARE_COMMIT:0:7}"

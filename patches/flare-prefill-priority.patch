@@ -1,0 +1,34 @@
+diff --git a/helios/src/scheduler/utility.rs b/helios/src/scheduler/utility.rs
+index fe916caf..5874ec31 100644
+--- a/helios/src/scheduler/utility.rs
++++ b/helios/src/scheduler/utility.rs
+@@ -47,6 +47,19 @@ impl ServicePrice {
+     }
+ }
+ 
++/// Multiplier on the value of prompt work, from FLARE_PREFILL_PRIORITY; 1.0 when unset or invalid.
++/// Above 1.0 a waiting prompt outbids decode rounds sooner, so new turns start decoding earlier.
++fn prefill_priority() -> f64 {
++    static PRIORITY: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
++    *PRIORITY.get_or_init(|| {
++        std::env::var("FLARE_PREFILL_PRIORITY")
++            .ok()
++            .and_then(|value| value.parse::<f64>().ok())
++            .filter(|value| value.is_finite() && *value > 0.0)
++            .unwrap_or(1.0)
++    })
++}
++
+ /// Values share one positive scaling factor across all candidates in a plan.
+ #[derive(Clone, Copy, Debug, Default)]
+ pub(super) struct LaneValue {
+@@ -61,7 +74,8 @@ pub(super) struct LaneValue {
+ 
+ impl LaneValue {
+     pub fn prefill(&self, consumed: usize, first_output: bool) -> f64 {
+-        self.prefill_token * consumed as f64 + self.output_token * f64::from(first_output)
++        prefill_priority()
++            * (self.prefill_token * consumed as f64 + self.output_token * f64::from(first_output))
+     }
+ 
+     pub fn decode(&self, expected_output: f64, duration_ms: f64) -> f64 {
