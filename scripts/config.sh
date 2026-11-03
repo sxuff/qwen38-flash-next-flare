@@ -1,8 +1,8 @@
 # Shared settings for the recipe scripts. Every value can be overridden from the environment.
 
-# Flare and Ignition, pinned to the commit this recipe was measured on.
+# Flare and Ignition at 44ec239 (Nov 3). The README's results were measured on ca1f960; this pin is not measured yet.
 FLARE_REPO=${FLARE_REPO:-https://github.com/NVIDIA/flare-local-inference.git}
-FLARE_COMMIT=${FLARE_COMMIT:-ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c}
+FLARE_COMMIT=${FLARE_COMMIT:-44ec239b616f8ac7b5656a7fb413a13fbddb26f9}
 FLARE_SRC=${FLARE_SRC:-$HOME/flare-local-inference}
 FLARE_BIN=${FLARE_BIN:-$FLARE_SRC/flare/target/release/flare}
 
@@ -23,8 +23,14 @@ SERVE_FLAGS=${SERVE_FLAGS:---no-mtp-adaptive-verification --mtp-draft-tokens 3 -
 PREFILL_PRIORITY=${PREFILL_PRIORITY:-16}
 RUN_LOG=${RUN_LOG:-$HOME/flare-run.log}
 
-# Prefix cache on disk, off by default: with the eviction patch the GPU's 64 snapshot slots already keep 85% of each prompt
-# cached for eight agents, and the disk store writes about 30 GB per benchmark run. A limit such as 20G turns it on.
+# Default cap on reasoning tokens for chat, Responses and Messages requests that send no budget of their own. Empty leaves
+# them uncapped, as measured. Flare reads it only from its config file, so start-flare.sh passes a copy of
+# ~/.config/flare/config.toml with the cap added. A request's own budget, including Messages thinking.budget_tokens, wins.
+THINKING_TOKEN_BUDGET=${THINKING_TOKEN_BUDGET:-}
+
+# Prefix cache on disk, off by default: on ca1f960 the eviction patch kept 85% of each prompt cached in the GPU's 64 snapshot
+# slots for eight agents, and the disk store wrote about 30 GB per benchmark run. Flare now sizes the GPU snapshot pool from
+# spare KV memory and offers the disk store less, so both are worth measuring again. A limit such as 20G turns it on.
 PREFIX_CACHE_DISK=${PREFIX_CACHE_DISK:-$HOME/.cache/flare/prefix-cache}
 PREFIX_CACHE_DISK_LIMIT=${PREFIX_CACHE_DISK_LIMIT:-0}
 

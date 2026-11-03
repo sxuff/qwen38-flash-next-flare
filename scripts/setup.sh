@@ -20,6 +20,16 @@ command -v cargo >/dev/null || { echo "Rust not found; install 1.88 or newer fro
 if [ ! -d "$FLARE_SRC/.git" ]; then
   git clone "$FLARE_REPO" "$FLARE_SRC"
 fi
+target=$(git -C "$FLARE_SRC" rev-parse --verify --quiet "$FLARE_COMMIT^{commit}" || true)
+if [ "$(git -C "$FLARE_SRC" rev-parse HEAD)" != "$target" ]; then
+  # A checkout made for an earlier pin still carries that pin's patches, which would block the checkout.
+  if [ -n "$(git -C "$FLARE_SRC" status --porcelain --untracked-files=no)" ]; then
+    echo "$FLARE_SRC has local changes, probably an earlier pin's patches."
+    echo "Discard them with 'git -C $FLARE_SRC checkout -- .' and run this again."
+    exit 1
+  fi
+  [ -n "$target" ] || git -C "$FLARE_SRC" fetch --quiet origin
+fi
 git -C "$FLARE_SRC" checkout --quiet "$FLARE_COMMIT"
 
 for PATCH in "$RECIPE_DIR"/patches/*.patch; do

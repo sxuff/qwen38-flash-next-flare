@@ -1,0 +1,16 @@
+diff --git a/ignition/recipes/qwen38/decoder.py b/ignition/recipes/qwen38/decoder.py
+index 3d950b50..698e9dea 100644
+--- a/ignition/recipes/qwen38/decoder.py
++++ b/ignition/recipes/qwen38/decoder.py
+@@ -227,9 +227,8 @@ class PreparedDecoder:
+         from .moe import PreparedQwenMoe
+         from .ple import PreparedPLE
+ 
+-        if verification:
+-            if scratch.sample_hidden.shape != scratch.hidden.shape:
+-                raise ValueError("verification requires one sample row per hidden row")
++        # A mixed round samples only its decode rows and the prompt's last row, and its state copies them out.
++        if verification and scratch.sample_hidden.shape == scratch.hidden.shape:
+             scratch = replace(scratch, sample_hidden=scratch.hidden)
+         self.weights, self.scratch, self.state = weights, scratch, state
+         self.verification = verification

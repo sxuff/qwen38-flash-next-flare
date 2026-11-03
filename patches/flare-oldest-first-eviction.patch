@@ -1,9 +1,9 @@
 diff --git a/helios/src/cache.rs b/helios/src/cache.rs
-index 90dfbd04..b5f13d2a 100644
+index 256502a1..0716907b 100644
 --- a/helios/src/cache.rs
 +++ b/helios/src/cache.rs
-@@ -481,46 +481,22 @@ impl PrefixCheckpointCache {
-         Ok(self.retire_leaf(id))
+@@ -528,40 +528,16 @@ impl PrefixCheckpointCache {
+         })
      }
  
 -    /// Thin dense checkpoint chains before retiring endpoints under snapshot pressure.
@@ -34,26 +34,15 @@ index 90dfbd04..b5f13d2a 100644
 -                            )
 -                        })
 -                        .map(|(node, _)| node.id)
-+            let candidate = self
-+                .nodes
-+                .values()
-+                .filter(|node| {
-+                    node.ready
-+                        && ((node.pins == 0 && node.child_count == 0)
-+                            || (node.direct_pins == 0 && node.child_count == 1))
-                 })
+-                })
 -                .flatten();
 -            let candidate = interior.or_else(|| {
--                self.nodes
--                    .values()
--                    .filter(|node| {
--                        node.ready
--                            && ((node.pins == 0 && node.child_count == 0)
--                                || (node.direct_pins == 0 && node.child_count == 1))
--                    })
+-                self.eviction_candidates()
 -                    .min_by_key(|node| (node.accessed, node.id))
 -                    .map(|node| node.id)
 -            });
++            let candidate = self
++                .eviction_candidates()
 +                .min_by_key(|node| (node.accessed, node.id))
 +                .map(|node| node.id);
              let Some(id) = candidate else {

@@ -13,7 +13,26 @@ if [ "$PREFIX_CACHE_DISK_LIMIT" != 0 ]; then
   mkdir -p "$PREFIX_CACHE_DISK"
   DISK_FLAGS="--prefix-cache-disk '$PREFIX_CACHE_DISK' --prefix-cache-disk-limit $PREFIX_CACHE_DISK_LIMIT"
 fi
-CMD="FLARE_PREFILL_PRIORITY=$PREFILL_PRIORITY $FLARE_BIN run '$PACKAGE' --gpus 0 --served-model-name $SERVED_NAME --host $HOST --port $PORT $SERVE_FLAGS $DISK_FLAGS 2>&1 | tee $RUN_LOG; echo FLARE_EXITED >> $RUN_LOG"
+CONFIG_FLAGS=
+if [ -n "$THINKING_TOKEN_BUDGET" ]; then
+  case $THINKING_TOKEN_BUDGET in
+    *[!0-9]* | 0*) echo "THINKING_TOKEN_BUDGET must be a positive whole number of tokens."; exit 1 ;;
+  esac
+  # Flare takes this default only from its config file: copy the usual one and add the cap to its [server] table.
+  base=$HOME/.config/flare/config.toml
+  config=$(dirname "$PACKAGE_FILE")/flare.toml
+  if [ -f "$base" ] && grep -q thinking_token_budget "$base"; then
+    echo "$base already sets thinking_token_budget; leave THINKING_TOKEN_BUDGET empty or remove it there."
+    exit 1
+  fi
+  mkdir -p "$(dirname "$config")"
+  { [ ! -f "$base" ] || cat "$base"; } | awk -v n="$THINKING_TOKEN_BUDGET" '
+    { print }
+    /^[[:space:]]*\[server\][[:space:]]*(#.*)?$/ && !done { print "thinking_token_budget = " n; done = 1 }
+    END { if (!done) printf "\n[server]\nthinking_token_budget = %s\n", n }' > "$config"
+  CONFIG_FLAGS="--config '$config'"
+fi
+CMD="FLARE_PREFILL_PRIORITY=$PREFILL_PRIORITY $FLARE_BIN run '$PACKAGE' --gpus 0 --served-model-name $SERVED_NAME --host $HOST --port $PORT $SERVE_FLAGS $DISK_FLAGS $CONFIG_FLAGS 2>&1 | tee $RUN_LOG; echo FLARE_EXITED >> $RUN_LOG"
 
 spid=$(tmux -L flare display-message -p -t flare '#{pid}' 2>/dev/null || true)
 if [ -n "$spid" ]; then
