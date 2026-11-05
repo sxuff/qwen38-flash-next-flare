@@ -1,6 +1,6 @@
 # Shared settings for the recipe scripts. Every value can be overridden from the environment.
 
-# Flare and Ignition at 44ec239 (Nov 3). The README's results were measured on ca1f960; this pin is not measured yet.
+# Flare and Ignition at 44ec239 (Nov 3). Measured Nov 5 without mixed prefill: level with ca1f960, which stays the recipe on main.
 FLARE_REPO=${FLARE_REPO:-https://github.com/NVIDIA/flare-local-inference.git}
 FLARE_COMMIT=${FLARE_COMMIT:-44ec239b616f8ac7b5656a7fb413a13fbddb26f9}
 FLARE_SRC=${FLARE_SRC:-$HOME/flare-local-inference}

@@ -1,0 +1,323 @@
+{
+ "date": "2026-11-05",
+ "hardware": "one ASUS Ascent GX10 (GB10, 128 GB unified memory)",
+ "environment": [
+  "new flare 44ec239b616f8ac7b5656a7fb413a13fbddb26f9 2026-11-03 07:34:04 -0800",
+  "old flare ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c 2026-10-26 17:37:01 -0700",
+  "342f472edaa4caecb2e97b75956e6d626e93675cf367f7481416f62966e13079  ~/flare-44ec239-test/bin/flare-recipe",
+  "5cdfd970c42d1039c45efa6c1c4fbe4eb587b10d3da967a15119983539b2407b  ~/flare-main-ab/src/flare/target/release/flare-prefill",
+  "4feafe898deb13d10afa9a5c23b631147d55cc8309237e43923e973d72d30a25  ~/flare-main-ab/agents_bench.py",
+  "new entry ~/.cache/flare/packages/models/nvidia_2FQwen3.8-Flash-Next-FP4-Local/gb10-tp1-202611051840",
+  "old entry ~/.cache/flare/packages/models/nvidia_2FQwen3.8-Flash-Next-FP4-Local/gb10-tp1-202610271753"
+ ],
+ "method": "Alternating runs in the order listed, Flare restarted for each, the same day, on port 8010. agents_bench.py at levels 1 and 8 with top_k 1, its files from the Flare 1fd1f91 checkout behind the published numbers, then the frozen flashnext-tf405 speed and prefill suites. Both arms: 3 fixed drafts, throughput scheduler, oldest-first eviction, FLARE_PREFILL_PRIORITY=16. The 44ec239 package has no mixed graphs and the ca1f960 package does. Graph launches and evictions cover the agent benchmark only.",
+ "exports": [
+  {
+   "flags": "--mixed-prefill --reuse-weights",
+   "result": "failed",
+   "stage": "Warm compiled forwards 118/135 after 2509 s",
+   "error": "CUDA out of memory; process 110.89 GiB, PyTorch 76.35 GiB"
+  },
+  {
+   "flags": "--mixed-prefill --reuse-weights",
+   "result": "failed",
+   "stage": "Warm compiled forwards 108/135 after 1576 s",
+   "error": "CUDA out of memory; process 103.10 GiB, PyTorch 76.16 GiB; host memory and swap also exhausted"
+  },
+  {
+   "flags": "--reuse-weights",
+   "result": "ok",
+   "minutes": 14,
+   "warm": "60/60 in 105.6 s",
+   "graphs": 84,
+   "entry": "gb10-tp1-202611051840",
+   "peak_gpu_mib": 86688
+  }
+ ],
+ "mean": {
+  "44ec239": {
+   "runs": 5,
+   "one_agent_tok_s": 37.12,
+   "eight_agents_tok_s": 82.48,
+   "eight_agents_tok_s_range": [
+    81.0,
+    83.6
+   ],
+   "eight_agents_wall_s": 142.9,
+   "eight_agents_median_first_token_s": 2.47,
+   "eight_agents_prompt_cached": 0.85,
+   "eight_agents_longest_pause_p90_s": 3.16,
+   "eight_agents_longest_pause_max_s": 7.66,
+   "decode_mean_tok_s": 52.02,
+   "long_prompt_32k_first_token_s": 13.56,
+   "agents_snapshot_evictions": 5.6
+  },
+  "ca1f960": {
+   "runs": 3,
+   "one_agent_tok_s": 38.5,
+   "eight_agents_tok_s": 83.17,
+   "eight_agents_tok_s_range": [
+    82.9,
+    83.7
+   ],
+   "eight_agents_wall_s": 143.53,
+   "eight_agents_median_first_token_s": 2.76,
+   "eight_agents_prompt_cached": 0.85,
+   "eight_agents_longest_pause_p90_s": 3.33,
+   "eight_agents_longest_pause_max_s": 5.92,
+   "decode_mean_tok_s": 52.57,
+   "long_prompt_32k_first_token_s": 13.49,
+   "agents_snapshot_evictions": 147
+  }
+ },
+ "runs": [
+  {
+   "run": "N-r1",
+   "arm": "44ec239",
+   "one_agent_tok_s": 37.1,
+   "eight_agents_tok_s": 81.0,
+   "eight_agents_wall_s": 143.3,
+   "eight_agents_median_first_token_s": 2.28,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 3.62,
+   "eight_agents_longest_pause_max_s": 7.66,
+   "decode_tok_s": {
+    "code": 55.4,
+    "math": 55.7,
+    "prose": 40.4,
+    "structured": 53.6
+   },
+   "decode_mean_tok_s": 51.3,
+   "long_prompt_first_token_s": {
+    "32000-code": 12.94,
+    "32000-prose": 14.01,
+    "8192-code": 3.05
+   },
+   "agents_graph_launches": {
+    "prefill": 246,
+    "mixed": 0,
+    "speculative": 1329
+   },
+   "agents_snapshot_evictions": 1,
+   "server_errors": 0
+  },
+  {
+   "run": "O-r1",
+   "arm": "ca1f960",
+   "one_agent_tok_s": 38.5,
+   "eight_agents_tok_s": 82.9,
+   "eight_agents_wall_s": 142.7,
+   "eight_agents_median_first_token_s": 2.7,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 3.23,
+   "eight_agents_longest_pause_max_s": 3.4,
+   "decode_tok_s": {
+    "code": 56.6,
+    "math": 57.7,
+    "prose": 43.0,
+    "structured": 54.6
+   },
+   "decode_mean_tok_s": 53.0,
+   "long_prompt_first_token_s": {
+    "32000-code": 12.88,
+    "32000-prose": 14.1,
+    "8192-code": 3.02
+   },
+   "agents_graph_launches": {
+    "prefill": 231,
+    "mixed": 8,
+    "speculative": 1303
+   },
+   "agents_snapshot_evictions": 147,
+   "server_errors": 0
+  },
+  {
+   "run": "O-r2",
+   "arm": "ca1f960",
+   "one_agent_tok_s": 38.2,
+   "eight_agents_tok_s": 83.7,
+   "eight_agents_wall_s": 146.2,
+   "eight_agents_median_first_token_s": 2.72,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 3.36,
+   "eight_agents_longest_pause_max_s": 3.78,
+   "decode_tok_s": {
+    "code": 57.0,
+    "math": 56.8,
+    "prose": 42.6,
+    "structured": 54.9
+   },
+   "decode_mean_tok_s": 52.8,
+   "long_prompt_first_token_s": {
+    "32000-code": 12.83,
+    "32000-prose": 14.12,
+    "8192-code": 3.01
+   },
+   "agents_graph_launches": {
+    "prefill": 229,
+    "mixed": 8,
+    "speculative": 1301
+   },
+   "agents_snapshot_evictions": 147,
+   "server_errors": 0
+  },
+  {
+   "run": "N-r2",
+   "arm": "44ec239",
+   "one_agent_tok_s": 35.5,
+   "eight_agents_tok_s": 82.1,
+   "eight_agents_wall_s": 143.0,
+   "eight_agents_median_first_token_s": 2.34,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 2.53,
+   "eight_agents_longest_pause_max_s": 4.32,
+   "decode_tok_s": {
+    "code": 55.8,
+    "math": 55.7,
+    "prose": 39.6,
+    "structured": 55.5
+   },
+   "decode_mean_tok_s": 51.7,
+   "long_prompt_first_token_s": {
+    "32000-code": 13.0,
+    "32000-prose": 14.07,
+    "8192-code": 3.08
+   },
+   "agents_graph_launches": {
+    "prefill": 243,
+    "mixed": 0,
+    "speculative": 1356
+   },
+   "agents_snapshot_evictions": 6,
+   "server_errors": 0
+  },
+  {
+   "run": "N-r3",
+   "arm": "44ec239",
+   "one_agent_tok_s": 38.0,
+   "eight_agents_tok_s": 83.6,
+   "eight_agents_wall_s": 144.1,
+   "eight_agents_median_first_token_s": 2.46,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 2.58,
+   "eight_agents_longest_pause_max_s": 5.67,
+   "decode_tok_s": {
+    "code": 55.3,
+    "math": 57.0,
+    "prose": 41.7,
+    "structured": 55.9
+   },
+   "decode_mean_tok_s": 52.5,
+   "long_prompt_first_token_s": {
+    "32000-code": 13.0,
+    "32000-prose": 14.04,
+    "8192-code": 3.06
+   },
+   "agents_graph_launches": {
+    "prefill": 244,
+    "mixed": 0,
+    "speculative": 1320
+   },
+   "agents_snapshot_evictions": 6,
+   "server_errors": 0
+  },
+  {
+   "run": "O-r3",
+   "arm": "ca1f960",
+   "one_agent_tok_s": 38.8,
+   "eight_agents_tok_s": 82.9,
+   "eight_agents_wall_s": 141.7,
+   "eight_agents_median_first_token_s": 2.86,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 3.4,
+   "eight_agents_longest_pause_max_s": 5.92,
+   "decode_tok_s": {
+    "code": 55.5,
+    "math": 56.5,
+    "prose": 40.1,
+    "structured": 55.4
+   },
+   "decode_mean_tok_s": 51.9,
+   "long_prompt_first_token_s": {
+    "32000-code": 12.91,
+    "32000-prose": 14.11,
+    "8192-code": 3.03
+   },
+   "agents_graph_launches": {
+    "prefill": 233,
+    "mixed": 10,
+    "speculative": 1304
+   },
+   "agents_snapshot_evictions": 147,
+   "server_errors": 0
+  },
+  {
+   "run": "N-r4",
+   "arm": "44ec239",
+   "one_agent_tok_s": 38.1,
+   "eight_agents_tok_s": 83.6,
+   "eight_agents_wall_s": 141.1,
+   "eight_agents_median_first_token_s": 2.4,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 2.55,
+   "eight_agents_longest_pause_max_s": 2.76,
+   "decode_tok_s": {
+    "code": 55.9,
+    "math": 54.6,
+    "prose": 41.5,
+    "structured": 56.4
+   },
+   "decode_mean_tok_s": 52.1,
+   "long_prompt_first_token_s": {
+    "32000-code": 13.4,
+    "32000-prose": 14.13,
+    "8192-code": 3.16
+   },
+   "agents_graph_launches": {
+    "prefill": 243,
+    "mixed": 0,
+    "speculative": 1266
+   },
+   "agents_snapshot_evictions": 8,
+   "server_errors": 0
+  },
+  {
+   "run": "N-r5",
+   "arm": "44ec239",
+   "one_agent_tok_s": 36.9,
+   "eight_agents_tok_s": 82.1,
+   "eight_agents_wall_s": 143.0,
+   "eight_agents_median_first_token_s": 2.85,
+   "eight_agents_prompt_cached": 0.846,
+   "eight_agents_longest_pause_p90_s": 4.54,
+   "eight_agents_longest_pause_max_s": 6.1,
+   "decode_tok_s": {
+    "code": 55.8,
+    "math": 54.8,
+    "prose": 43.9,
+    "structured": 55.6
+   },
+   "decode_mean_tok_s": 52.5,
+   "long_prompt_first_token_s": {
+    "32000-code": 13.02,
+    "32000-prose": 13.96,
+    "8192-code": 3.16
+   },
+   "agents_graph_launches": {
+    "prefill": 242,
+    "mixed": 0,
+    "speculative": 1385
+   },
+   "agents_snapshot_evictions": 7,
+   "server_errors": 0
+  }
+ ],
+ "not_measured": [
+  "long agent sessions",
+  "without the eviction patch",
+  "FLARE_PREFILL_PRIORITY 1 and 4",
+  "disk prefix cache",
+  "quality",
+  "a completed --mixed-prefill export at 44ec239"
+ ]
+}

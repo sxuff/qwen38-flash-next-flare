@@ -1,6 +1,6 @@
 # Qwen3.8 Flash-Next on Flare, one DGX Spark or ASUS Ascent GX10
 
-> **Branch `flare-44ec239`, not measured yet.** This branch moves the recipe to Flare 44ec239 (Nov 3). Every result below was measured on ca1f960, the pin on `main`. What changed and what to measure: [Moving to Flare 44ec239](#moving-to-flare-44ec239).
+> **Branch `flare-44ec239`, measured Nov 5: no speed gain over ca1f960, so `main` stays the recipe.** This branch moves to Flare 44ec239 (Nov 3) and exports without mixed prefill, because with it the export runs out of memory at this pin. The introduction and the [Results](#results) section describe ca1f960, with mixed prefill. This pin's numbers: [Moving to Flare 44ec239](#moving-to-flare-44ec239).
 
 A **Flare** serving recipe for NVIDIA's NVFP4 Qwen3.8 Flash-Next on one NVIDIA GB10 with 128 GB unified memory. It rebuilds NVIDIA's runtime package from source with three changes the prebuilt package lacks: **greedy decoding** (top-k 1), **speculative capacity for eight concurrent agents**, and **mixed prefill**, then serves it with **three drafts per round** on a Flare runtime patched for agents: **oldest-first prefix-cache eviction** and **prompts first** in the scheduler.
 
@@ -14,11 +14,11 @@ A **Flare** serving recipe for NVIDIA's NVFP4 Qwen3.8 Flash-Next on one NVIDIA G
 Weights:          nvidia/Qwen3.8-Flash-Next-FP4-Local @ b9ce18a6 (NVFP4 experts, MXFP8 attention, QAD)
 Runtime:          Flare 0.1.0 and Ignition, NVIDIA/flare-local-inference @ 44ec239, built from source
 Patches:          top-k range 1-20 (top-k 1 is greedy; sampling defaults unchanged);
-                  two mixed-prefill export fixes (upstream bugs since Oct 24 and Oct 26, issue #115);
+                  two mixed-prefill export fixes (issue #115), applied but not needed without --mixed-prefill;
                   oldest-first prefix-snapshot eviction (upstream's order since Oct 23 costs 30% with 8 agents);
                   prompt priority setting (FLARE_PREFILL_PRIORITY)
 Package:          8 request slots, 4 image slots, up to 5 MTP drafts,
-                  speculative capacity 48 tokens, mixed prefill graphs
+                  speculative capacity 48 tokens, no mixed prefill graphs
 Serving:          3 drafts every round (--no-mtp-adaptive-verification --mtp-draft-tokens 3),
                   throughput scheduler (--scheduler-policy throughput), FLARE_PREFILL_PRIORITY=16
 Thinking cap:     optional default (THINKING_TOKEN_BUDGET), off
@@ -35,32 +35,51 @@ The weights are NVIDIA's own checkpoint; nothing is re-quantized. The package Ig
 
 ## Moving to Flare 44ec239
 
-This branch is for exporting and measuring. Until it has been measured, `main` (ca1f960) stays the recipe.
+**No speed gain on this benchmark, so `main` (ca1f960) stays the recipe.** Measured Nov 5 on one GB10, the same day, with alternating runs and Flare restarted for each. Both arms ran three fixed drafts, the throughput scheduler, oldest-first eviction and prompt priority 16, on the workload behind the published numbers (agent files from the 1fd1f91 checkout). [Receipt](results/flare-44ec239-vs-ca1f960-20261105.json).
+
+| | 44ec239, no mixed prefill (5 runs) | ca1f960, mixed prefill (3 runs) |
+|---|---:|---:|
+| 8 agents, total output | 82.5 tok/s (81.0 to 83.6) | 83.2 tok/s (82.9 to 83.7) |
+| 48 turns finished in | 143 s | 144 s |
+| Median first token, 8 agents | 2.5 s | 2.8 s |
+| Prompt cached, 8 agents | 85% | 85% |
+| Snapshot evictions, agent benchmark | about 6 | 147 |
+| Longest pause per reply, 90th percentile | 3.2 s | 3.3 s |
+| Worst pause | 7.7 s | 5.9 s |
+| 1 agent, total output | 37.1 tok/s | 38.5 tok/s |
+| Single-request decode | 52.0 tok/s | 52.6 tok/s |
+| 32K-token prompt to first token | 13.6 s | 13.5 s |
+
+- **Within noise:** total output, decode and the long prompt. All five 1-agent runs were below all three ca1f960 runs, so that small drop may be real.
+- **Mixed prefill:** dropping it shows no cost here, but the arms also differ in Flare version, so this does not isolate it. On ca1f960 mixed graphs launched only 8 to 10 times in the agent benchmark.
+
+**Mixed prefill does not export on one GB10 at this pin.** `--mixed-prefill` needs 135 forwards. Warming ran out of memory twice, at 118 and at 108 of 135, with GPU use climbing about 0.23 GiB a forward. Host memory and swap ran out as well, so stop a failing export instead of waiting for it. ca1f960 warmed all 135 in about 260 s; this pin took 1,576 s to reach 108. Upstream commit `cb6187bf`, which selects kernels during warming, is the likely cause; this has not been profiled. Without the flag there are 60 forwards: they warmed in 106 s, and the export took 14 minutes with `--reuse-weights` and caches warm from the failed attempts.
 
 What the branch changes:
 
 - **Pin:** Flare 44ec239, 111 commits after ca1f960. The package format changed (execution ABI 4 to 5), so a package exported at ca1f960 does not load: run `setup.sh` and `export.sh` again.
-- **New patch, [`qwen38-mixed-verification-rows.patch`](patches/qwen38-mixed-verification-rows.patch).** Since upstream commit `317c1ecc` (Oct 26, the commit after ca1f960), a `--mixed-prefill` export stops at the first mixed graph with `verification requires one sample row per hidden row` ([#115](https://github.com/NVIDIA/flare-local-inference/issues/115), regression 1, still open). That commit made the verification decoder sample straight from its hidden rows. A mixed round samples only its decode rows and the prompt's last row, and its state copies those into a separate buffer, as every verification round did before. The patch keeps the separate buffer when the row counts differ and the direct path when they match. **It has not run on a GPU yet.**
+- **New patch, [`qwen38-mixed-verification-rows.patch`](patches/qwen38-mixed-verification-rows.patch).** Since upstream commit `317c1ecc` (Oct 26, the commit after ca1f960), a `--mixed-prefill` export stops at the first mixed graph with `verification requires one sample row per hidden row` ([#115](https://github.com/NVIDIA/flare-local-inference/issues/115), regression 1, still open). That commit made the verification decoder sample straight from its hidden rows. A mixed round samples only its decode rows and the prompt's last row, and its state copies those into a separate buffer, as every verification round did before. The patch keeps the separate buffer when the row counts differ and the direct path when they match. An unpatched export (on 7c1a9fde) stopped at graph 52 of 159; with the patch the catalog and compile finish and at least 58 mixed forwards warm before the memory failure above. **No complete mixed package has been produced or served at this pin.**
 - **Eviction patch rebased.** Upstream moved the eviction candidate filter into `eviction_candidates()`; the patch now uses it and keeps the same oldest-first order. Like the original, it fails two upstream unit tests that encode the thinning order (`snapshot_pressure_thins_history_without_discarding_endpoints_or_pages` and `snapshot_pressure_removes_a_dense_recent_checkpoint_before_a_sparse_older_one`). The recipe does not run them.
 - The mixed-prefill export fix (regression 2 of #115), prompt priority and top-k patches apply unchanged.
 - **Thinking cap:** `THINKING_TOKEN_BUDGET`, off by default (see [Start the server](#6-start-the-server)).
 - **`setup.sh`** fetches the new pin into an existing checkout, and stops with a hint if that checkout still carries the old pin's patches.
+- **`export.sh`** no longer passes `--mixed-prefill` (add it as an argument to try), and with `--reuse-weights` it asks for 30 GB free instead of 120. The measured export ran the same `ignition export` command directly, not through this script.
 
 Upstream changes that bear on this recipe:
 
-- **Snapshots sized by memory ([#168](https://github.com/NVIDIA/flare-local-inference/pull/168)).** On ca1f960 the GPU kept 8 snapshot rows per request slot, 64 here, which is why the eviction order mattered. Snapshots can now use any spare KV memory and give it back when active requests need pages; on upstream's 130K-token test conversation, snapshot evictions went from 425 to none. The oldest-first patch only changes the order under snapshot pressure, so it may matter much less now.
+- **Snapshots sized by memory ([#168](https://github.com/NVIDIA/flare-local-inference/pull/168)).** On ca1f960 the GPU kept 8 snapshot rows per request slot, 64 here, which is why the eviction order mattered. Snapshots can now use any spare KV memory and give it back when active requests need pages; on upstream's 130K-token test conversation, snapshot evictions went from 425 to none. The oldest-first patch only changes the order under snapshot pressure, so it may matter much less now. Here evictions in the agent benchmark fell from 147 to about 6, but the cached share stayed at 85%.
 - **Less written to disk (#168).** The host store is offered only checkpoints a request may resume, and interior records drop their resume rows. Upstream's disk writes over 30 minutes fell from 125 GB to 2.7 GB, but on DeepSeek across four GPUs, where storing the ranks' identical data once also helps; one GPU gets only the first two savings. Those writes (about 30 GB per benchmark run) are why this recipe leaves the disk tier off.
 - **Hard thinking budgets ([#167](https://github.com/NVIDIA/flare-local-inference/pull/167)).** Messages `thinking.budget_tokens` now caps reasoning instead of only hinting at effort, so Claude Code's budget, when it sends one, ends reasoning at that length.
 - **Prompt starvation.** A commenter reports [#42](https://github.com/NVIDIA/flare-local-inference/issues/42) (a final prefill waiting behind decode) fixed on main, from scheduler tests only, and the scheduler planning rewrite (#188) landed in this pin. Prompt priority may buy less than it did.
 - **Smaller fixes:** reasoning tokens in usage counts (#170), no think-close tokens in visible content (#162), tool-call IDs unique across restarts (#176).
 
-What to measure, in order:
+Not measured at this pin:
 
-1. `export.sh` completes with `--mixed-prefill`, and `flare run` loads the package. This is the test of the new patch.
-2. The agent benchmark at 1 and 8 agents, against the ca1f960 rows below. `flare_graph_launches_total{kind="mixed"}` should rise during the 8-agent run.
-3. Eight agents without the eviction patch, then with `PREFIX_CACHE_DISK_LIMIT=20G`.
-4. `PREFILL_PRIORITY` at 1, 4 and 16.
-5. Single-request decode and the 32K-token prompt probe.
+1. Long agent sessions, where the snapshot change should matter most. This benchmark's prompts are about 10K tokens.
+2. Eight agents without the eviction patch, then with `PREFIX_CACHE_DISK_LIMIT=20G`.
+3. `PREFILL_PRIORITY` at 1 and 4.
+4. A `--mixed-prefill` export that fits, which needs the warming memory problem fixed first.
+5. Quality, including the thinking cap.
 
 ## Results
 
@@ -185,13 +204,13 @@ bash scripts/download.sh
 bash scripts/export.sh
 ```
 
-Ignition loads the checkpoint, tunes kernels (about 40 min), compiles 135 forwards (about 25 min), warms them, captures 159 CUDA graphs and publishes a 107 GB package into Flare's model cache (`~/.cache/flare/packages`), signed with a development key it creates in `~/.config/flare`. `export.sh` records the new cache entry in `~/.local/state/qwen38-flash-next-flare/package`, where the other scripts find it. Nothing else may use the GPU meanwhile. The script checks free disk, the memlock limit and the GPU before it starts.
+Ignition loads the checkpoint, tunes kernels, compiles 60 forwards, warms them, captures 84 CUDA graphs and publishes a 107 GB package into Flare's model cache (`~/.cache/flare/packages`), signed with a development key it creates in `~/.config/flare`. `export.sh` records the new cache entry in `~/.local/state/qwen38-flash-next-flare/package`, where the other scripts find it. Nothing else may use the GPU meanwhile. The script checks free disk, the memlock limit and the GPU before it starts.
 
 - If an export fails, run it again: kernel and forward caches make a rerun take about 30 minutes.
 - To re-export after a change to the export flags or the Flare build, `bash scripts/export.sh --reuse-weights` skips rehashing the weights (about 17 minutes). The weights are shared between versions, so a second version adds only about 1 GB.
 - `flare models list` shows the exported versions; `flare models remove MODEL@VERSION` and then `flare models gc` free an old one.
 - Packages exported by the earlier pin (1fd1f91, a single `.safetensors` file) do not load in this Flare: it asks for a re-export.
-- Packages exported at ca1f960 do not load at 44ec239 either: the package's execution ABI went from 4 to 5. Whether `--reuse-weights` works across that change is untested.
+- Packages exported at ca1f960 do not load at 44ec239 either: the package's execution ABI went from 4 to 5. `--reuse-weights` does work across that change: reusing a ca1f960 export's weights added about 1 GB.
 
 ## 5. Approve your signing key (first use)
 

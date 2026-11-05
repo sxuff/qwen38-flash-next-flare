@@ -9,9 +9,12 @@ export PATH=/usr/local/cuda/bin:$PATH
 
 CACHE=${FLARE_PACKAGE_CACHE:-$HOME/.cache/flare/packages}
 mkdir -p "$CACHE" "$(dirname "$PACKAGE_FILE")"
+# --reuse-weights keeps an earlier export's weights, so it needs room only for kernels and metadata.
+need_gb=120
+case " $* " in *" --reuse-weights "*) need_gb=30 ;; esac
 free_gb=$(df -BG --output=avail "$CACHE" | tail -1 | tr -dc 0-9)
-if [ "$free_gb" -lt 120 ]; then
-  echo "Only ${free_gb} GB free. The package needs about 100 GB besides the checkpoint; it fails near the end otherwise."
+if [ "$free_gb" -lt "$need_gb" ]; then
+  echo "Only ${free_gb} GB free, and this export needs about ${need_gb} GB besides the checkpoint; it fails near the end otherwise."
   exit 1
 fi
 if [ "$(ulimit -l)" != unlimited ]; then
@@ -27,8 +30,9 @@ cd "$FLARE_SRC"
 log=$(mktemp)
 start=$(date +%s)
 # Extra arguments pass through, e.g. --reuse-weights to skip rehashing the weights of an earlier export.
+# No --mixed-prefill: at this pin its 135 forwards run out of memory while warming on one GB10 (see the README).
 .venv/bin/ignition export qwen3.8-flash --gpus 0 --max-concurrency 8 --image-concurrency 4 \
-  --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill --verbose "$@" 2>&1 | tee "$log"
+  --mtp-draft-tokens 5 --speculative-token-capacity 48 --verbose "$@" 2>&1 | tee "$log"
 status=${PIPESTATUS[0]}
 entry=$(sed -n 's/^Exported cache entry: //p' "$log" | tail -1)
 rm -f "$log"
