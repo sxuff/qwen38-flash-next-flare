@@ -1,5 +1,15 @@
 # Qwen3.8 Flash-Next on Flare, one DGX Spark or ASUS Ascent GX10
 
+## Run it
+
+```bash
+git clone https://github.com/sxuff/qwen38-flash-next-flare && cd qwen38-flash-next-flare && ./run.sh
+```
+
+Expected: **83.0 tok/s** total output with eight concurrent coding agents (mean of five runs; 52.5 tok/s for one request) — this repo has no receipt JSON; the numbers are in the tables below and [`results/figures/eight-agents.png`](results/figures/eight-agents.png)
+
+First run: do [Prepare the host](#1-prepare-the-host) once and start `./run.sh` from the console or OpenSSH (Tailscale SSH skips the memlock limit). It stops once for you to approve your package's key and licence with `bash scripts/approve-key.sh`.
+
 A **Flare** serving recipe for NVIDIA's NVFP4 Qwen3.8 Flash-Next on one NVIDIA GB10 with 128 GB unified memory. It rebuilds NVIDIA's runtime package from source with three changes the prebuilt package lacks: **greedy decoding** (top-k 1), **speculative capacity for eight concurrent agents**, and **mixed prefill**, then serves it with **three drafts per round** on a Flare runtime patched for agents: **oldest-first prefix-cache eviction** and **prompts first** in the scheduler.
 
 **Built for agents.** With eight coding agents at once it produces **3.5×** the output of TensorFold running the EXL3 4.05 recipe, and reaches each agent's first token in 2.7 s instead of 63 s. One request at a time the engines are close, and quality is the same.
