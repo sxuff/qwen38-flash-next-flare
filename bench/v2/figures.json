@@ -1,0 +1,11 @@
+{
+ "levels": [1, 2, 4, 8],
+ "arms": [
+  {"key": "A", "label": "A · Flare ca1f960, MTP, mixed prefill (v1)", "color": "#1b4f96"},
+  {"key": "B", "label": "B · Hyperflare, MTP, mixed prefill", "color": "#3b88e6"},
+  {"key": "C", "label": "C · Hyperflare, MTP, separate graphs", "color": "#9aa3ae"},
+  {"key": "D", "label": "D · Hyperflare, DFlash2", "color": "#e07a2e"}
+ ],
+ "foot": ["PLACEHOLDER"],
+ "date": "PLACEHOLDER"
+}

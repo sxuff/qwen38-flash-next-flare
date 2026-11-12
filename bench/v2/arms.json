@@ -8,5 +8,55 @@
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
   "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
   "prefill_priority": 16
+ },
+ "B": {
+  "description": "Hyperflare + MTP + mixed prefill, export and serving matched to A",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@B",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "C": {
+  "description": "Hyperflare + MTP, separate prefill and verification graphs (no mixed prefill); otherwise as B",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@C",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "D4": {
+  "description": "Hyperflare + DFlash2 (incoai/Qwen3.8-Flash-Next-DFlash2@a22a1744), separate graphs, 4 fixed drafts",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@D",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 4 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "D5": {
+  "description": "Hyperflare + DFlash2, separate graphs, 5 fixed drafts (upstream's default depth)",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@D",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 5 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "D6": {
+  "description": "Hyperflare + DFlash2, separate graphs, 6 fixed drafts",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@D",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 6 --scheduler-policy throughput",
+  "prefill_priority": 16
  }
 }

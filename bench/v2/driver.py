@@ -166,6 +166,8 @@ def main():
     ap.add_argument("--note", default="")
     args = ap.parse_args()
     arm = json.loads(args.arms.read_text())[args.arm]
+    if arm["package"].startswith("@"):  # "@B": the cache entry export_arm.sh recorded for that export
+        arm["package"] = (HOME / "v2/state" / f"{arm['package'][1:]}.package").read_text().strip()
     args.out.mkdir(parents=True, exist_ok=True)
     traces = HOME / "v2/traces"
     traces.mkdir(parents=True, exist_ok=True)

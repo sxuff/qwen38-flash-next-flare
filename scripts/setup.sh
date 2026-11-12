@@ -22,7 +22,7 @@ if [ ! -d "$FLARE_SRC/.git" ]; then
 fi
 git -C "$FLARE_SRC" checkout --quiet "$FLARE_COMMIT"
 
-for PATCH in "$RECIPE_DIR"/patches/*.patch; do
+for PATCH in "$RECIPE_DIR/$PATCH_DIR"/*.patch; do
   if git -C "$FLARE_SRC" apply --check "$PATCH" 2>/dev/null; then
     git -C "$FLARE_SRC" apply "$PATCH"
     echo "Applied $(basename "$PATCH")"
@@ -37,5 +37,5 @@ done
 cd "$FLARE_SRC"
 # uv does not notice source changes in the native exporter, so rebuild it with the patch every time.
 uv sync --locked --extra prepare --extra test --reinstall-package flare-heliopause
-cargo build --release --manifest-path flare/Cargo.toml
-echo "Built $("$FLARE_BIN" --version) at ${FLARE_COMMIT:0:7}"
+cargo build --release --manifest-path "$FLARE_CLI_DIR/Cargo.toml"
+echo "Built $("$FLARE_BIN" --version) at ${FLARE_COMMIT:0:7} for profile $PROFILE ($FLARE_BIN)"
