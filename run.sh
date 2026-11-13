@@ -27,8 +27,8 @@ CONTAINER_NAME=""
 READY_URL="http://127.0.0.1:${PORT}/health"      # clients/claude-code/claude-flare.sh:15
 READY_TIMEOUT=1200                               # README.md:175 says ready in about 30 s; a margin, not a measured value
 case "$MODE" in   # measured values for the profile each mode selects (results/v2/summary.json, Nov 13, 2026)
-  agents) EXPECTED_LINE="85.8 tok/s total output with 8 concurrent agents, 48 turns in 137 s (mean of 5 runs)" ;;
-  single) EXPECTED_LINE="37.9 tok/s with 1 agent (6 turns in 40.6 s), 52.7 tok/s single-request decode (means of 5 and 3 runs)" ;;
+  agents) EXPECTED_LINE="88.3 tok/s total output with 8 concurrent agents, 48 turns in 132.4 s on a warmed engine (mean of 5 runs)" ;;
+  single) EXPECTED_LINE="38.3 tok/s with 1 agent, 6 turns in 39.9 s on a warmed engine (mean of 5 runs)" ;;
 esac
 [ "$PROFILE" = "$DEFAULT_PROFILE" ] || EXPECTED_LINE="profile $PROFILE: see results/v2/summary.json"
 RECEIPT_PATH="results/v2/summary.json (raw runs and pins: results/v2/raw, results/v2/pins.json)"

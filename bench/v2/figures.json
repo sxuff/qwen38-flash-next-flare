@@ -7,29 +7,38 @@
  ],
  "arms": [
   {
-   "key": "A",
+   "key": "Aw",
    "label": "A · Flare ca1f960, MTP, mixed prefill (this recipe)",
    "color": "#3b88e6"
   },
   {
-   "key": "B",
+   "key": "Bw",
    "label": "B · Hyperflare, MTP, mixed prefill",
-   "color": "#1b4f96"
+   "color": "#2fa36b"
   },
   {
-   "key": "C",
-   "label": "C · Hyperflare, MTP, separate graphs",
-   "color": "#9aa3ae"
-  },
-  {
-   "key": "D4",
+   "key": "D4w",
    "label": "D · Hyperflare, DFlash2, 4 drafts",
    "color": "#e07a2e"
   }
  ],
+ "cold": [
+  {
+   "key": "A",
+   "color": "#3b88e6"
+  },
+  {
+   "key": "B",
+   "color": "#2fa36b"
+  },
+  {
+   "key": "D4",
+   "color": "#e07a2e"
+  }
+ ],
  "foot": [
-  "Same 6-turn code-review sessions on every arm, same files, fresh engine per run. Greedy, thinking on, up to 256 tokens per reply.",
-  "Mean of five runs at 1 and 8 agents (D: seven, two from the depth sweep), three at 2 and 4. One GB10, clocks not locked."
+  "Same 6-turn code-review sessions on every arm, same files, fresh engine per run warmed by three first-turn requests. Greedy, thinking on, 256-token replies.",
+  "Mean of five runs at 1 and 8 agents, three at 2 and 4. Differences under about 5% are within run-to-run spread. One GB10, clocks not locked."
  ],
  "date": "Nov 13, 2026"
 }

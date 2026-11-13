@@ -74,12 +74,19 @@ def time_to_finish(data, arms, levels, foot, date, path):
     plt.close(fig)
 
 
-def output_by_agents(data, arms, levels, foot, date, path, note=None):
+def output_by_agents(data, arms, levels, foot, date, path, note=None, cold=()):
     fig = card("Total output by agent count", "Qwen3.8-Flash-Next NVFP4 · one GB10 · greedy decoding", note, foot, date)
     legend(fig, arms)
     ax = fig.add_axes([0.1, 0.2, 0.8, 0.47])
     style_axis(ax)
     ax.grid(axis="y", color=GRID, linewidth=1)
+    for arm in cold:  # the same arms on a freshly started engine: thin dashed lines, for contrast
+        xs = [l for l in levels if f"agents-{l}" in data.get(arm["key"], {})]
+        ax.plot(xs, [data[arm["key"]][f"agents-{l}"]["total_tok_s"] for l in xs], color=arm["color"], linewidth=1.8,
+                linestyle=(0, (4, 3)), alpha=0.75)
+    if cold:
+        fig.text(0.058, 0.68, "Solid: engine warmed by three requests. Dashed: freshly started engine, one warm-up request.",
+                 fontsize=13, color=MUTED)
     ends = []
     for arm in arms:
         xs = [l for l in levels if f"agents-{l}" in data[arm["key"]]]
@@ -107,5 +114,7 @@ if __name__ == "__main__":
     data = json.loads(SUMMARY.read_text(encoding="utf-8"))
     arms = [a for a in spec["arms"] if a["key"] in data]
     time_to_finish(data, arms, spec["levels"], spec["foot"], spec["date"], OUT / "v2-time-to-finish.png")
-    output_by_agents(data, arms, spec["levels"], spec["foot"], spec["date"], OUT / "v2-output-by-agents.png", spec.get("note"))
+    cold = [c for c in spec.get("cold", []) if c["key"] in data]
+    output_by_agents(data, arms, spec["levels"], spec["foot"], spec["date"], OUT / "v2-output-by-agents.png", spec.get("note"),
+                     cold)
     print("wrote", OUT / "v2-time-to-finish.png", OUT / "v2-output-by-agents.png")

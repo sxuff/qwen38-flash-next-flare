@@ -1,14 +1,15 @@
 # Shared settings for the recipe scripts. Every value can be overridden from the environment.
 
-# Which measured configuration to build and serve (README, "Which config should I run?"). In v2 this recipe's
-# build won both: fastest at 2 to 8 agents and narrowly at one agent (results/v2/summary.json).
+# Which measured configuration to build and serve (README, "Which config should I run?"). In v2, on a warmed engine,
+# Hyperflare with MTP and mixed prefill finished fastest at 8 agents and at 1 agent (results/v2/summary.json, arm Bw);
+# PROFILE=flare-mtp-mixed keeps this recipe's original Flare build.
 #   MODE=agents  the fastest at 8 concurrent agents (the default)
 #   MODE=single  the fastest for one request at a time
 # Each mode names a PROFILE below; PROFILE can also be set directly.
 MODE=${MODE:-agents}
 case "$MODE" in
-  agents) DEFAULT_PROFILE=flare-mtp-mixed ;;
-  single) DEFAULT_PROFILE=flare-mtp-mixed ;;
+  agents) DEFAULT_PROFILE=hyperflare-mtp-mixed ;;
+  single) DEFAULT_PROFILE=hyperflare-mtp-mixed ;;
   *) echo "unknown MODE=$MODE (agents or single)" >&2; return 2 2>/dev/null || exit 2 ;;
 esac
 PROFILE=${PROFILE:-$DEFAULT_PROFILE}
