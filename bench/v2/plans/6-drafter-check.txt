@@ -1,0 +1,6 @@
+B quality 1
+D3 quality 1
+B4 quality 1
+B4 single 1
+B4 single 2
+B4 single 3

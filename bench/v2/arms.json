@@ -122,5 +122,31 @@
   "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 4 --scheduler-policy throughput",
   "prefill_priority": 16,
   "prewarm": 3
+ },
+ "B4": {
+  "description": "B serving 4 fixed MTP drafts (package B captures up to 5)",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@B",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 4 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "D3": {
+  "description": "Hyperflare + DFlash2, separate graphs, 3 fixed drafts (the drafter card's evaluation depth)",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@D",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
+  "prefill_priority": 16
  }
 }

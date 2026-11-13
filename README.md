@@ -13,7 +13,7 @@ Measured Nov 12–13, 2026 on one GB10: this recipe (A, Flare `ca1f960`) against
 | One request, short prompts (decode) | D, Hyperflare + DFlash2 | 55.5 tok/s | 52.7 tok/s | 5% |
 | One 32K-token prompt | D, Hyperflare + DFlash2 | 13.3 s | 14.0 s | 5% |
 
-**The crossover is at about 4 agents:** below it the three are tied, from 4 agents on Hyperflare is a few percent ahead, and B and D are tied with each other for agents. The margins are small: at 8 agents B's runs took 128.0 to 137.7 s and A's 135.1 to 145.8 s (exact permutation test p = 0.08; p = 0.10 at 4 agents). DFlash2 adds nothing for agents; it wins only one request at a time, probably because it drafts four tokens against MTP's three.
+**The crossover is at about 4 agents:** below it the three are tied, from 4 agents on Hyperflare is a few percent ahead, and B and D are tied with each other for agents. The margins are small: at 8 agents B's runs took 128.0 to 137.7 s and A's 135.1 to 145.8 s (exact permutation test p = 0.08; p = 0.10 at 4 agents). DFlash2 adds nothing for agents; it wins one request at a time, and that is the drafter, not the extra draft: MTP with four drafts is no faster than with three.
 
 **Restarted often? Then this recipe is faster.** A freshly started Hyperflare engine does not snapshot the end of a shared system prompt until it has timed a few requests, so its first new sessions re-read the whole prompt: measured that way, A finishes 8 agents in 137.0 s against 144.5 s, and its slowest first tokens are 3× sooner ([details](#fresh-engine-vs-running-server)). This recipe's numbers are the same either way.
 
@@ -129,9 +129,21 @@ The frozen `flashnext-tf405` harness from v1: four prompts × three repeats × 4
 | A, this recipe | 52.7 | 14.0 s | 57.8 ms | 2.00 of 3 |
 | B | 51.3 | 13.8 s | 58.7 ms | 1.96 of 3 |
 | C | 51.3 | 13.9 s | 58.6 ms | 1.97 of 3 |
+| B with 4 MTP drafts | 51.4 | 13.9 s | 64.7 ms | 2.24 of 4 |
 | **D, DFlash2** | **55.5** | **13.3 s** | 64.0 ms | 2.44 of 4 |
 
-D decodes 5% faster one request at a time (its runs 54.7 to 56.2 tok/s, A's 52.0 to 53.3), but it also drafts four tokens against three, and v1 found that more MTP drafts help single-stream decode ("five drafts was fastest only on single-stream decode"). MTP with four drafts was not measured in v2.
+D decodes 5% faster one request at a time (its runs 54.7 to 56.2 tok/s, A's 52.0 to 53.3). That is the drafter, not the extra draft: Hyperflare's MTP with four drafts gains acceptance (2.24 against 1.96 per round) but loses it again to a longer step, and decodes at 51.4 tok/s, the same as with three. At four drafts the same step time buys DFlash2 2.44.
+
+### Is the drafter held back by the NVFP4 weights?
+
+The DFlash2 drafter was trained for the BF16 model and evaluated on the FP8 one; its card reports 6% (GSM8K) to 17% (HumanEval) longer accepted runs than MTP. On these NVFP4 weights, on the harness's GSM8K and HumanEval prompts, one request at a time:
+
+| Accepted run per verification step | 3 drafts | 4 drafts | Accepted at draft position 1 / 2 / 3, 3 drafts |
+|---|---|---|---|
+| MTP (Hyperflare) | 3.31 | 3.76 | 0.91 / 0.77 / 0.63 |
+| DFlash2 | **3.55 (+7%)** | **4.12 (+10%)** | 0.94 / 0.85 / 0.76 |
+
+So the drafter keeps most of its advantage on NVFP4, and training an NVFP4-specific one has little to gain on prompts like these. Where it loses its edge is the agent workload: on the 6K- to 15K-token code-review sessions DFlash2 and MTP are accepted equally often. Its draft layers attend only to the last 2,048 accepted positions, which may be why; that was not tested.
 
 ### Quality
 
@@ -140,9 +152,12 @@ The same harness's 50 GSM8K and 20 HumanEval items, its own extraction and Docke
 | | GSM8K (50) | HumanEval (20) |
 |---|---|---|
 | A, this recipe | 49, 49 | 11, 14 |
-| D, DFlash2 | 49, 49 | 12, 14 |
+| B, Hyperflare, MTP | 49, 48 | 13, 13 |
+| B with 4 MTP drafts | 49, 49 | 14, 14 |
+| D, DFlash2, 3 drafts | 49, 49 | 14, 11 |
+| D, DFlash2, 4 drafts | 49, 49 | 12, 14 |
 
-The same. Greedy runs are not bit-for-bit repeatable (14 of 70 outputs on A and 8 on D were identical across the two seeds), so HumanEval moves by a few items between runs. B was not scored; D runs on the same Hyperflare engine and scored the same as A.
+The same. Greedy runs are not bit-for-bit repeatable (between 6 and 14 of the 70 outputs were identical across the two seeds), so HumanEval moves by a few items between runs.
 
 ### How it was run
 

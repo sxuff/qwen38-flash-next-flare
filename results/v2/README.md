@@ -9,7 +9,7 @@ Receipts for the v2 comparison in the main [README](../../README.md#v2-results-f
   - `*-speed.jsonl`, `*-prefill.jsonl`, `*-quality-s405.jsonl`, `*-quality-s406.jsonl`: the frozen harness's rows, outputs included. The per-request event folders and the 2-second traces stay on the measuring host (about 80 MB).
   - `*-single-score.json`, `*-quality-score.json`: `bench/v2/score_v2.py` output.
 
-Arms in file names: `A`, `B`, `C`, and `D4`/`D5`/`D6` for DFlash2 at 4, 5 and 6 drafts (`D5` and `D6` ran only the depth sweep), all on a freshly started engine; `Aw`, `Bw`, `D4w` are A, B and D4 on an engine first warmed by three first-turn requests (`prewarm` in each receipt records them). Run plans, in the order run: [`bench/v2/plans`](../../bench/v2/plans). Runs `D4-agents-L1-8-r1` and `-r2` are the depth sweep; the main plan's D runs are `D4-agents-L1-2-4-8-r1..3` and `D4-agents-L1-8-r4..5`.
+Arms in file names: `A`, `B`, `C`, and `D4`/`D5`/`D6` for DFlash2 at 4, 5 and 6 drafts (`D5` and `D6` ran only the depth sweep), all on a freshly started engine; `Aw`, `Bw`, `D4w` are A, B and D4 on an engine first warmed by three first-turn requests (`prewarm` in each receipt records them). `B4` is B serving four MTP drafts and `D3` is DFlash2 at three, used to check draft depth and the drafter's acceptance against MTP's. Run plans, in the order run: [`bench/v2/plans`](../../bench/v2/plans). Runs `D4-agents-L1-8-r1` and `-r2` are the depth sweep; the main plan's D runs are `D4-agents-L1-2-4-8-r1..3` and `D4-agents-L1-8-r4..5`.
 
 Two things to know:
 
