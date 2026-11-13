@@ -1,0 +1,4 @@
+A agents 1 1 2 4 8
+B agents 1 1 2 4 8
+B agents 2 1 2 4 8
+A agents 2 1 2 4 8

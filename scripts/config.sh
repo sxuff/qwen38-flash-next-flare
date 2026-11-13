@@ -1,6 +1,7 @@
 # Shared settings for the recipe scripts. Every value can be overridden from the environment.
 
-# Which measured configuration to build and serve (README, "Which config should I run?"):
+# Which measured configuration to build and serve (README, "Which config should I run?"). In v2 this recipe's
+# build won both: fastest at 2 to 8 agents and narrowly at one agent (results/v2/summary.json).
 #   MODE=agents  the fastest at 8 concurrent agents (the default)
 #   MODE=single  the fastest for one request at a time
 # Each mode names a PROFILE below; PROFILE can also be set directly.
@@ -31,7 +32,7 @@ case "$PROFILE" in
       hyperflare-mtp-mixed) P_EXPORT="--mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill" ;;
       hyperflare-mtp)       P_EXPORT="--mtp-draft-tokens 5 --speculative-token-capacity 48" ;;
       hyperflare-dflash2)   P_EXPORT="--speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56"
-                            P_SERVE="--no-mtp-adaptive-verification --mtp-draft-tokens DFLASH2_DEPTH --scheduler-policy throughput" ;;
+                            P_SERVE="--no-mtp-adaptive-verification --mtp-draft-tokens 4 --scheduler-policy throughput" ;;
     esac ;;
   *) echo "unknown PROFILE=$PROFILE" >&2; return 2 2>/dev/null || exit 2 ;;
 esac

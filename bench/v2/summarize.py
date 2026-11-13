@@ -9,6 +9,7 @@ Definitions (the same as v1's analysis):
   prompt cached        cached prompt tokens / prompt tokens over the level's turns
   acceptance           accepted draft tokens per request verification round, over the whole run (engine counters)
   target step time     single-request decode: total decode time / verification rounds (one target step each)
+  long prompt          the harness probes ask for one token, so their total request time is the time to first token
   peak memory          largest GPU memory nvidia-smi reported for the engine during the run
 Cells report the mean over runs and keep every run's value.
 """
@@ -69,9 +70,10 @@ for rec_path in sorted(RAW.glob("*.json")):
         speed = [json.loads(l) for l in (RAW / f"{rec['tag']}-speed.jsonl").read_text().splitlines() if l.strip()]
         decode_s = sum((r["completion_tokens"] - 1) / r["decode_tps"] for r in speed if r.get("decode_tps"))
         rounds = counter(rec["metrics_delta"], "verification_request_rounds_total")
-        long32 = {k: v["ttft_s"] for k, v in s["prefill"].items() if v["prompt_tokens"] > 30000}
+        # The probes ask for one token, so (as in v1) the request's total time is its time to first token.
+        long32 = {k: v["elapsed_s"] for k, v in s["prefill"].items() if v["prompt_tokens"] > 30000}
         cells[(arm, "single")]["runs"].append({**common, "decode_tok_s": s["decode_tps"],
-            "ttft_32k_s": st.mean(long32.values()) if long32 else None, "ttft_by_probe_s": {k: v["ttft_s"] for k, v in s["prefill"].items()},
+            "ttft_32k_s": st.mean(long32.values()) if long32 else None, "ttft_by_probe_s": {k: v["elapsed_s"] for k, v in s["prefill"].items()},
             "target_step_ms": 1000 * decode_s / rounds if rounds else None})
     elif rec["workload"] == "quality":
         score = RAW / f"{rec['tag']}-quality-score.json"

@@ -165,6 +165,9 @@ def main():
     ap.add_argument("--arms", type=Path, default=Path(__file__).with_name("arms.json"))
     ap.add_argument("--note", default="")
     args = ap.parse_args()
+    # The harness collector runs from its own directory, so a relative --out must be made absolute here; v2's single
+    # runs were saved under the harness directory before this line existed (results/v2/README.md).
+    args.out = args.out.resolve()
     arm = json.loads(args.arms.read_text())[args.arm]
     if arm["package"].startswith("@"):  # "@B": the cache entry export_arm.sh recorded for that export
         arm["package"] = (HOME / "v2/state" / f"{arm['package'][1:]}.package").read_text().strip()

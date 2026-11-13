@@ -1,0 +1,105 @@
+{
+ "tag": "D4-agents-L1-2-4-8-r3",
+ "arm": "D4",
+ "arm_config": {
+  "description": "Hyperflare + DFlash2 (incoai/Qwen3.8-Flash-Next-DFlash2@a22a1744), separate graphs, 4 fixed drafts",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "/home/sxuf/.cache/flare/packages/models/nvidia_2FQwen3.8-Flash-Next-FP4-Local/gb10-tp1-202611130606",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 4 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "workload": "agents",
+ "run": 3,
+ "note": "",
+ "started": "2026-11-13T08:50:03+0100",
+ "workload_src": "/home/sxuf/v2/flare-ca1f960",
+ "workload_src_commit": "ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c",
+ "engine_version": "flare 0.1.0",
+ "gpu_before": {
+  "clock_gr_mhz": 208.0,
+  "clock_mem_mhz": "[N/A]",
+  "clock_sm_mhz": 208.0,
+  "temp_c": 50.0,
+  "power_w": 4.38,
+  "throttle": "0x0000000000000000",
+  "apps": [],
+  "mem_available_bytes": 122557280256
+ },
+ "ready_s": 24.0,
+ "turns_file": "D4-agents-L1-2-4-8-r3-turns.json",
+ "workload_s": 375.0,
+ "exit_code": 0,
+ "workload_log": "warmup {'prompt_tokens': 4695, 'cached_tokens': 0, 'latency_s': 5.422259337967262}\nrep 1 level 1: 6 turns, wall 43.6s, output 34.3 tok/s\nrep 1 level 2: 12 turns, wall 60.1s, output 47.2 tok/s\nrep 1 level 4: 24 turns, wall 94.3s, output 62.7 tok/s\nrep 1 level 8: 48 turns, wall 147.5s, output 80.2 tok/s\nALL_DONE 90\n",
+ "metrics_delta": {
+  "flare_accepted_draft_tokens_total": 14179.0,
+  "flare_cache_reused_tokens_total": 682710.0,
+  "flare_draft_request_rounds_total": 7930.0,
+  "flare_generated_tokens_last_minute": 4914.0,
+  "flare_generated_tokens_total": 22221.0,
+  "flare_graph_launches_total{kind=\"init\"}": 8.0,
+  "flare_graph_launches_total{kind=\"prefill\"}": 278.0,
+  "flare_graph_launches_total{kind=\"restore\"}": 74.0,
+  "flare_graph_launches_total{kind=\"snapshot\"}": 83.0,
+  "flare_graph_launches_total{kind=\"speculative\"}": 2425.0,
+  "flare_prefill_tokens_total": 206386.0,
+  "flare_requests_completed_total": 91.0,
+  "flare_sampling_graph_launches_total{kind=\"prefill\",mode=\"general\"}": 278.0,
+  "flare_sampling_graph_launches_total{kind=\"speculative\",mode=\"general\"}": 2425.0,
+  "flare_speculative_accepted_drafts_total{batch=\"1\",width=\"5\"}": 1333.0,
+  "flare_speculative_accepted_drafts_total{batch=\"2\",width=\"5\"}": 1873.0,
+  "flare_speculative_accepted_drafts_total{batch=\"4\",width=\"5\"}": 4873.0,
+  "flare_speculative_accepted_drafts_total{batch=\"8\",width=\"5\"}": 6100.0,
+  "flare_speculative_drafts_total{depth=\"1\",source=\"mtp\",outcome=\"accepted\"}": 5865.0,
+  "flare_speculative_drafts_total{depth=\"1\",source=\"mtp\",outcome=\"offered\"}": 7930.0,
+  "flare_speculative_drafts_total{depth=\"2\",source=\"mtp\",outcome=\"accepted\"}": 3898.0,
+  "flare_speculative_drafts_total{depth=\"2\",source=\"mtp\",outcome=\"offered\"}": 7894.0,
+  "flare_speculative_drafts_total{depth=\"3\",source=\"mtp\",outcome=\"accepted\"}": 2627.0,
+  "flare_speculative_drafts_total{depth=\"3\",source=\"mtp\",outcome=\"offered\"}": 7852.0,
+  "flare_speculative_drafts_total{depth=\"4\",source=\"mtp\",outcome=\"accepted\"}": 1789.0,
+  "flare_speculative_drafts_total{depth=\"4\",source=\"mtp\",outcome=\"offered\"}": 7810.0,
+  "flare_speculative_offered_drafts_total{batch=\"1\",width=\"5\"}": 2982.0,
+  "flare_speculative_offered_drafts_total{batch=\"2\",width=\"5\"}": 4061.0,
+  "flare_speculative_offered_drafts_total{batch=\"4\",width=\"5\"}": 10975.0,
+  "flare_speculative_offered_drafts_total{batch=\"8\",width=\"5\"}": 13468.0,
+  "flare_speculative_rounds_total{batch=\"1\",width=\"5\"}": 760.0,
+  "flare_speculative_rounds_total{batch=\"2\",width=\"5\"}": 514.0,
+  "flare_speculative_rounds_total{batch=\"4\",width=\"5\"}": 717.0,
+  "flare_speculative_rounds_total{batch=\"8\",width=\"5\"}": 434.0,
+  "flare_verification_draft_tokens_total": 31486.0,
+  "flare_verification_request_rounds_total": 7959.0
+ },
+ "system": {
+  "samples": 176,
+  "clock_gr_mhz": {
+   "min": 2385.0,
+   "median": 2405.0,
+   "max": 2411.0
+  },
+  "clock_mem_mhz": null,
+  "temp_c": {
+   "min": 52.0,
+   "median": 70.0,
+   "max": 75.0
+  },
+  "power_w": {
+   "min": 12.26,
+   "median": 37.29,
+   "max": 60.62
+  },
+  "throttle_reasons_seen": [
+   "0x0000000000000000"
+  ],
+  "peak_engine_gpu_mib": 104893,
+  "min_mem_available_gib": 6.2,
+  "foreign_gpu_processes": []
+ },
+ "engine_errors": 0,
+ "cooldown_s": 141,
+ "temp_after_cooldown_c": 50.0
+}

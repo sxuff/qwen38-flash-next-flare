@@ -26,8 +26,12 @@ ENGINE_KIND=process
 CONTAINER_NAME=""
 READY_URL="http://127.0.0.1:${PORT}/health"      # clients/claude-code/claude-flare.sh:15
 READY_TIMEOUT=1200                               # README.md:175 says ready in about 30 s; a margin, not a measured value
-EXPECTED_LINE="83.0 tok/s total output with 8 concurrent agents (README.md:43,59; no receipt JSON in this repo)"
-RECEIPT_PATH="README.md (figure: results/figures/eight-agents.png)"
+case "$MODE" in   # measured values for the profile each mode selects (results/v2/summary.json, Nov 13, 2026)
+  agents) EXPECTED_LINE="85.8 tok/s total output with 8 concurrent agents, 48 turns in 137 s (mean of 5 runs)" ;;
+  single) EXPECTED_LINE="37.9 tok/s with 1 agent (6 turns in 40.6 s), 52.7 tok/s single-request decode (means of 5 and 3 runs)" ;;
+esac
+[ "$PROFILE" = "$DEFAULT_PROFILE" ] || EXPECTED_LINE="profile $PROFILE: see results/v2/summary.json"
+RECEIPT_PATH="results/v2/summary.json (raw runs and pins: results/v2/raw, results/v2/pins.json)"
 
 # Checkpoint files at the pinned revision (scripts/config.sh:11-12). The repo pins the revision but
 # no per-file checksums, so these come from the Hub's own metadata at that revision (Hub check
