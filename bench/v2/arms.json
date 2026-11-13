@@ -2,7 +2,12 @@
  "A": {
   "description": "v1 recipe: Flare ca1f960 + the four v1 patches, MTP, mixed prefill, 3 fixed drafts, throughput scheduler, prompt priority 16",
   "engine": "NVIDIA/flare-local-inference@ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c",
-  "patches": ["flare-mixed-export-depth.patch", "flare-oldest-first-eviction.patch", "flare-prefill-priority.patch", "qwen38-topk-range.patch"],
+  "patches": [
+   "flare-mixed-export-depth.patch",
+   "flare-oldest-first-eviction.patch",
+   "flare-prefill-priority.patch",
+   "qwen38-topk-range.patch"
+  ],
   "flare_bin": "/home/sxuf/v2/flare-ca1f960/flare/target/release/flare",
   "package": "/home/sxuf/.cache/flare/packages/models/nvidia_2FQwen3.8-Flash-Next-FP4-Local/gb10-tp1-202610271753",
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
@@ -12,7 +17,10 @@
  "B": {
   "description": "Hyperflare + MTP + mixed prefill, export and serving matched to A",
   "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
-  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
   "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
   "package": "@B",
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
@@ -22,7 +30,10 @@
  "C": {
   "description": "Hyperflare + MTP, separate prefill and verification graphs (no mixed prefill); otherwise as B",
   "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
-  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
   "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
   "package": "@C",
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48",
@@ -32,7 +43,10 @@
  "D4": {
   "description": "Hyperflare + DFlash2 (incoai/Qwen3.8-Flash-Next-DFlash2@a22a1744), separate graphs, 4 fixed drafts",
   "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
-  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
   "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
   "package": "@D",
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
@@ -42,7 +56,10 @@
  "D5": {
   "description": "Hyperflare + DFlash2, separate graphs, 5 fixed drafts (upstream's default depth)",
   "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
-  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
   "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
   "package": "@D",
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
@@ -52,11 +69,58 @@
  "D6": {
   "description": "Hyperflare + DFlash2, separate graphs, 6 fixed drafts",
   "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
-  "patches": ["hyperflare/qwen38-topk-range.patch", "hyperflare/flare-prefill-priority.patch"],
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
   "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
   "package": "@D",
   "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
   "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 6 --scheduler-policy throughput",
   "prefill_priority": 16
+ },
+ "Aw": {
+  "description": "v1 recipe: Flare ca1f960 + the four v1 patches, MTP, mixed prefill, 3 fixed drafts, throughput scheduler, prompt priority 16; engine pre-warmed with 3 first-turn requests before the benchmark (bench/v2/driver.py prewarm)",
+  "engine": "NVIDIA/flare-local-inference@ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c",
+  "patches": [
+   "flare-mixed-export-depth.patch",
+   "flare-oldest-first-eviction.patch",
+   "flare-prefill-priority.patch",
+   "qwen38-topk-range.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/flare-ca1f960/flare/target/release/flare",
+  "package": "/home/sxuf/.cache/flare/packages/models/nvidia_2FQwen3.8-Flash-Next-FP4-Local/gb10-tp1-202610271753",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
+  "prefill_priority": 16,
+  "prewarm": 3
+ },
+ "Bw": {
+  "description": "Hyperflare + MTP + mixed prefill, export and serving matched to A; engine pre-warmed with 3 first-turn requests before the benchmark (bench/v2/driver.py prewarm)",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@B",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
+  "prefill_priority": 16,
+  "prewarm": 3
+ },
+ "D4w": {
+  "description": "Hyperflare + DFlash2 (incoai/Qwen3.8-Flash-Next-DFlash2@a22a1744), separate graphs, 4 fixed drafts; engine pre-warmed with 3 first-turn requests before the benchmark (bench/v2/driver.py prewarm)",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "@D",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --speculative-method dflash2 --mtp-draft-tokens 6 --speculative-token-capacity 56",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 4 --scheduler-policy throughput",
+  "prefill_priority": 16,
+  "prewarm": 3
  }
 }

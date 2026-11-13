@@ -112,6 +112,33 @@ def cool_down():
         time.sleep(10)
 
 
+PREWARM = r"""
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import agents_bench as ab
+ab.MODEL, ab.SAMPLING = sys.argv[2], {"top_k": 1}
+out = []
+for i in range(int(sys.argv[3])):
+    path, code = ab.CHUNKS[-1 - i]  # from the end of the file list: never used by the benchmark's own sessions
+    r = ab.post_stream([{"role": "system", "content": ab.SYSTEM},
+                        {"role": "user", "content": f"Warm-up {i + 1}. Contents of {path}:\n```\n{code}\n```"}], seed=900 + i)
+    out.append({"prompt_tokens": r["prompt_tokens"], "cached_tokens": r["cached_tokens"], "ttft_s": r["ttft_s"]})
+print(json.dumps(out))
+"""
+
+
+def prewarm(n):
+    """Send n first-turn-like requests (the benchmark's system prompt and tools, files it never uses) before the
+    workload. Hyperflare saves snapshots at earlier message boundaries only once it has timed a few prefill and snapshot
+    steps, so a freshly started engine misses the shared system prompt on its first turns; a running server would not.
+    Engine counters and the workload's own warm-up start after this."""
+    r = subprocess.run(["python3", "-c", PREWARM, str(REPO / "bench"), MODEL, str(n)], capture_output=True, text=True,
+                       env=dict(os.environ, FLARE_SRC=str(WORKLOAD_SRC)))
+    if r.returncode:
+        raise SystemExit(f"prewarm failed: {r.stderr[-2000:]}")
+    return json.loads(r.stdout.strip().splitlines()[-1])
+
+
 def run_agents(levels, out):
     cmd = ["python3", str(REPO / "bench/agents_bench.py"), "--levels", *map(str, levels), "--reps", "1",
            "--sampling-json", '{"top_k": 1}', "--model", MODEL, "--out", str(out)]
@@ -184,6 +211,8 @@ def main():
                    "engine_version": sh(f"{arm['flare_bin']} --version").stdout.strip(), "gpu_before": gpu()}
         print(f"[{time.strftime('%H:%M:%S')}] {tag}: starting engine", flush=True)
         receipt["ready_s"] = round(start_engine(arm, log), 1)
+        if arm.get("prewarm"):
+            receipt["prewarm"] = prewarm(arm["prewarm"])
         sampler = Sampler(traces / f"{tag}-samples.jsonl")
         before = metrics_text()
         sampler.start()
