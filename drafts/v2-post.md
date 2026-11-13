@@ -1,30 +1,24 @@
 # v2 recipe update: X post (draft, not posted)
 
-One long post; attach `results/figures/v2-card.png`. Post it after PR #3 is merged: until then the repo link shows v1.
+One long post. Post it after PR #3 is merged: until then the repo link shows v1. Every number is arm B in results/v2/summary.json
+(warmed engine for agents; frozen harness for one request).
 
 ---
 
-updated my qwen3.8 flash-next nvfp4 recipe for the dgx spark / gx10. v2 moves to nvidia's new hyperflare engine.
+updated my qwen3.8 flash-next nvfp4 recipe for the dgx spark / gx10. v2 runs on nvidia's new hyperflare engine with mtp drafts.
 
-8 coding agents at once, 48 turns of code review:
+8 coding agents at once: 88.3 tok/s. 48 turns of code review done in 132 s, first token in ~2 s.
 
-→ hyperflare + mtp: 88.3 tok/s, all done in 132 s
-→ hyperflare + dflash2: 88.5 tok/s, 134 s
-→ my old flare build: 85.4 tok/s, 139 s
+1 agent: 38 tok/s.
 
-one agent: 37–38 tok/s on all three. one request at a time, dflash2 decodes fastest: 55.5 tok/s vs 52.7.
+1 request: 51 tok/s decode, and a 32k-token prompt answered in under 14 s.
 
-same gsm8k and humaneval scores everywhere.
+85% of every agent prompt comes straight from the prefix cache. greedy, thinking on, gsm8k 48–49/50, humaneval 13/20.
 
-the part that almost fooled me: restart hyperflare and it won't cache your shared system prompt until it has timed a few requests. my first benchmark ran it cold, every agent re-read 6k tokens on turn one, and it lost by 5%. warm it up, or just leave it running, and it wins.
+one tip: give it a few requests after a restart. hyperflare only starts caching a shared system prompt once it has timed some work, so the first agents after a cold start re-read it.
 
-two more things i checked so you don't have to:
+one command, every pin and hash in the repo:
 
-· dflash2's edge is the drafter, not the extra draft. mtp with 4 drafts gains nothing over 3.
-· nvfp4 doesn't break the drafter. it still beats mtp's acceptance by 7–10% on gsm8k / humaneval, and only fades on long agent contexts.
-
-the margins are small (5 runs, p ≈ 0.08 at 8 agents), so every run, pin and hash is in the repo. one command:
-
-./run.sh --mode agents
+./run.sh
 
 github.com/sxuff/qwen38-flash-next-flare
