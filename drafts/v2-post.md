@@ -12,7 +12,7 @@ updated my qwen3.8 flash-next nvfp4 recipe for the dgx spark / gx10. v2 moves to
 → hyperflare + dflash2: 88.5 tok/s, 134 s
 → my old flare build: 85.4 tok/s, 139 s
 
-one agent: ~38 tok/s on all three. one request at a time, dflash2 decodes fastest: 55.5 tok/s vs 52.7.
+one agent: 37–38 tok/s on all three. one request at a time, dflash2 decodes fastest: 55.5 tok/s vs 52.7.
 
 same gsm8k and humaneval scores everywhere.
 
