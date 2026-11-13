@@ -1,0 +1,6 @@
+D5 agents 1 1 8
+D4 agents 1 1 8
+D6 agents 1 1 8
+D6 agents 2 1 8
+D4 agents 2 1 8
+D5 agents 2 1 8

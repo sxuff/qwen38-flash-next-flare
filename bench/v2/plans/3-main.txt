@@ -1,0 +1,28 @@
+C agents 1 1 2 4 8
+D4 agents 1 1 2 4 8
+A agents 3 1 2 4 8
+B agents 3 1 2 4 8
+D4 agents 2 1 2 4 8
+C agents 2 1 2 4 8
+C agents 3 1 2 4 8
+D4 agents 3 1 2 4 8
+A agents 4 1 8
+B agents 4 1 8
+C agents 4 1 8
+D4 agents 4 1 8
+D4 agents 5 1 8
+C agents 5 1 8
+B agents 5 1 8
+A agents 5 1 8
+A single 1
+B single 1
+C single 1
+D4 single 1
+D4 single 2
+C single 2
+B single 2
+A single 2
+A single 3
+B single 3
+C single 3
+D4 single 3

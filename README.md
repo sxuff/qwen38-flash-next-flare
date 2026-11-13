@@ -1,12 +1,33 @@
 # Qwen3.8 Flash-Next on Flare, one DGX Spark or ASUS Ascent GX10
 
+## Which config should I run?
+
+Measured Nov 12–13, 2026 on one GB10: this recipe (A, Flare `ca1f960`) against NVIDIA's newer Hyperflare engine with MTP (B) and with the DFlash2 drafter (D). Headline: **time until every agent's six turns are done**, lower is better, on an engine that has already served a few requests, as a running agent server has. Mean of five runs at 1 and 8 agents, three at 2 and 4. Raw numbers and every pin: [`results/v2`](results/v2).
+
+| Workload | Fastest | Its time | This recipe (A) | Margin over A |
+|---|---|---|---|---|
+| 1 agent | B, Hyperflare, MTP + mixed prefill | 39.9 s | 40.9 s | 2%, within noise |
+| 2 agents | D, Hyperflare + DFlash2 (B 56.5 s) | 55.2 s | 57.2 s | 2–3%, within noise |
+| 4 agents | D, Hyperflare + DFlash2 (B 86.8 s) | 84.8 s | 89.4 s | 3–5% |
+| 8 agents | **B, Hyperflare, MTP + mixed prefill** (D 133.8 s) | **132.4 s** | 138.9 s | **5%** |
+| One request, short prompts (decode) | D, Hyperflare + DFlash2 | 55.5 tok/s | 52.7 tok/s | 5% |
+| One 32K-token prompt | D, Hyperflare + DFlash2 | 13.3 s | 14.0 s | 5% |
+
+**The crossover is at about 4 agents:** below it the three are tied, from 4 agents on Hyperflare is a few percent ahead, and B and D are tied with each other for agents. The margins are small: at 8 agents B's runs took 128.0 to 137.7 s and A's 135.1 to 145.8 s (exact permutation test p = 0.08; p = 0.10 at 4 agents). DFlash2 adds nothing for agents; it wins one request at a time, and that is the drafter, not the extra draft: MTP with four drafts is no faster than with three.
+
+**Restarted often? Then this recipe is faster.** A freshly started Hyperflare engine does not snapshot the end of a shared system prompt until it has timed a few requests, so its first new sessions re-read the whole prompt: measured that way, A finishes 8 agents in 137.0 s against 144.5 s, and its slowest first tokens are 3× sooner ([details](#fresh-engine-vs-running-server)). This recipe's numbers are the same either way.
+
+**Default: Hyperflare with MTP and mixed prefill (B).** `./run.sh` and `./run.sh --mode agents` build and serve it, and so does `./run.sh --mode single`, because it is also the fastest at one agent (by a margin within noise). `PROFILE=flare-mtp-mixed ./run.sh` serves this recipe's original build (no re-export if you already have it); `PROFILE=hyperflare-dflash2 ./run.sh` serves DFlash2 for one-request decode. Quality is the same on all of them.
+
 ## Run it
 
 ```bash
 git clone https://github.com/sxuff/qwen38-flash-next-flare && cd qwen38-flash-next-flare && ./run.sh
 ```
 
-Expected: **83.0 tok/s** total output with eight concurrent coding agents (mean of five runs; 52.5 tok/s for one request) — this repo has no receipt JSON; the numbers are in the tables below and [`results/figures/eight-agents.png`](results/figures/eight-agents.png)
+Expected: **88.3 tok/s** total output with eight concurrent coding agents, all 48 turns done in 132.4 s on a warmed engine (Hyperflare, MTP, mixed prefill; mean of five runs, Nov 13, 2026; receipt: [`results/v2/summary.json`](results/v2/summary.json)). This recipe's original build measured 83.0 tok/s in v1 (Oct 28–29; tables below, kept as measured) and 85.4 tok/s in v2.
+
+Modes: `./run.sh --mode agents` (default) and `./run.sh --mode single` choose the measured configuration; `./run.sh --check` prints what would happen and changes nothing. The default now builds Hyperflare `8a887202` into `~/hyperflare-inference`; its first export took about 4 hours on a GB10 (50 min of kernel tuning, 2 h 44 min compiling 135 forwards) and needs the same disk as below. Sections 1 to 6 describe this recipe's original Flare build, which `PROFILE=flare-mtp-mixed` selects; the Hyperflare profiles use the same scripts and steps.
 
 First run: do [Prepare the host](#1-prepare-the-host) once and start `./run.sh` from the console or OpenSSH (Tailscale SSH skips the memlock limit). It stops once for you to approve your package's key and licence with `bash scripts/approve-key.sh`.
 
@@ -40,7 +61,114 @@ Hardware:         one GB10, 128 GB unified memory
 
 The weights are NVIDIA's own checkpoint; nothing is re-quantized. The package Ignition exports from it is about 107 GB (100 GiB) and runs with 76.5 GiB of fixed GPU allocations.
 
-## Results
+## v2 results: Flare recipe vs Hyperflare with DFlash2
+
+Measured Nov 12–13, 2026 on one ASUS Ascent GX10. Every run's numbers, clocks and pins: [`results/v2`](results/v2); the harness that ran them: [`bench/v2`](bench/v2).
+
+![Time to finish by agent count](results/figures/v2-time-to-finish.png)
+
+![Total output by agent count](results/figures/v2-output-by-agents.png)
+
+### The arms
+
+| Arm | Engine | Drafts | Prefill | Isolates |
+|---|---|---|---|---|
+| **A** | Flare `ca1f960` + the four v1 patches; v1's package `gb10-tp1-202610271753` | MTP, 3 fixed | mixed | reference (this recipe) |
+| **B** | Hyperflare `8a887202` + [2 patches](patches/hyperflare) | MTP, 3 fixed | mixed | the new engine |
+| **C** | Hyperflare `8a887202` + 2 patches | MTP, 3 fixed | separate graphs | losing mixed prefill |
+| **D** | Hyperflare `8a887202` + 2 patches | DFlash2, 4 fixed | separate graphs | gaining DFlash2 |
+
+All arms use the same weights (`nvidia/Qwen3.8-Flash-Next-FP4-Local@b9ce18a6`; all 33 files match the hashes in `run.sh`), the same capacity (8 requests, 4 image slots; MTP exports up to 5 drafts in 48 speculative tokens, DFlash2 up to 6 in 56), the throughput scheduler, `FLARE_PREFILL_PRIORITY=16` and greedy decoding (top-k 1).
+
+- **Hyperflare** is `NVIDIA/flare-local-inference` renamed (`d2b5c5f`, Nov 8); `ca1f960` is 250 commits behind `8a887202`. Of v1's four patches, top-k range and prompt priority are still needed; the mixed-prefill export fix and oldest-first eviction are upstream in other forms ([details](patches/hyperflare/README.md)).
+- **DFlash2 cannot use mixed prefill:** `ignition/planning.py` rejects `--speculative-method dflash2` with `--mixed-prefill` ("requires separate prefill and verification graphs"). C separates that loss from the drafter.
+- **The drafter** is `incoai/Qwen3.8-Flash-Next-DFlash2@a22a1744` (sha256 `d6723f2a…3186f`), the revision Hyperflare pins. Its card names `Qwen/Qwen3.8-Flash-Next` as the base and was evaluated on the FP8 checkpoint, not NVIDIA's NVFP4 QAD weights used here.
+- **Draft depth** was swept around upstream's default of 5 (fresh engine, 2 runs each at 1 and 8 agents): 4 drafts 79.2 tok/s with eight agents, 5 drafts 79.1, 6 drafts 76.6. Four was kept.
+
+### Several agents at once (warmed engine)
+
+`bench/agents_bench.py`, unchanged: six-turn code-review sessions, replies up to 256 tokens, thinking on. Each run starts a fresh engine and first sends it three first-turn requests built from source files the benchmark never uses (`prewarm` in `bench/v2/driver.py`), so it behaves like a server that is already running. Mean of five runs at 1 and 8 agents, three at 2 and 4; arms interleaved.
+
+| Time to finish all turns | 1 agent | 2 agents | 4 agents | 8 agents | 8 agents, single runs |
+|---|---|---|---|---|---|
+| A, this recipe | 40.9 s | 57.2 s | 89.4 s | 138.9 s | 135.1 to 145.8 s |
+| **B, Hyperflare, MTP, mixed prefill** | **39.9 s** | 56.5 s | 86.8 s | **132.4 s** | 128.0 to 137.7 s |
+| D, Hyperflare, DFlash2 | 42.0 s | **55.2 s** | **84.8 s** | 133.8 s | 127.2 to 140.4 s |
+
+| 8 agents | Total output | First token, median | First token, p90 | Longest pause in a reply, p90 | Prompt cached | Accepted drafts per round |
+|---|---|---|---|---|---|---|
+| A | 85.4 tok/s | 2.2 s | 6.7 s | 3.2 s | 85% | 1.65 of 3 |
+| B | 88.3 tok/s | 2.0 s | 6.6 s | 2.7 s | 85% | 1.65 of 3 |
+| D | **88.5 tok/s** | **1.8 s** | **6.3 s** | **2.6 s** | 85% | 1.88 of 4 |
+
+- **Hyperflare is a few percent faster from four agents on**, with the same prompt-cache hits and the same acceptance as this recipe: B against A is −4.7% at 8 agents and −3.0% at 4 (exact permutation tests on the runs: p = 0.08 and 0.10). At 1 and 2 agents the differences are within noise (p ≥ 0.26).
+- **DFlash2 and MTP are tied for agents** (B against D: p = 0.66 at 8 agents). Per draft position DFlash2 is accepted about as often as MTP on these weights (first draft 0.74 against 0.75, second 0.50 against 0.52, third 0.33 against 0.36), so its fourth draft adds acceptance but costs a longer step.
+- Peak engine memory was 101 to 103 GiB on every arm.
+
+### Fresh engine vs running server
+
+The first v2 runs started each engine fresh with only the benchmark's own warm-up request, as v1 did. That is where Hyperflare lost:
+
+| Fresh engine, time to finish | 1 agent | 2 agents | 4 agents | 8 agents | 8 agents, first token p90 | Prompt cached, 8 agents |
+|---|---|---|---|---|---|---|
+| **A, this recipe** | **40.6 s** | **57.6 s** | **89.7 s** | **137.0 s** | **7.0 s** | **85%** |
+| B | 40.8 s | 60.7 s | 92.0 s | 144.5 s | 19.6 s | 77% |
+| C, Hyperflare, MTP, separate graphs | 43.4 s | 60.7 s | 91.6 s | 145.0 s | 19.6 s | 77% |
+| D | 43.0 s | 61.3 s | 93.7 s | 149.2 s | 18.8 s | 77% |
+
+The whole difference is each session's first turn: on a fresh Hyperflare engine it reused 0% of its prompt, against 77% on this recipe; turns 2 to 6 were the same on both. Hyperflare saves a snapshot at the last complete message of every prompt, and at earlier message boundaries (here the end of the shared system prompt and tools) only within a budget that needs measured prefill and snapshot costs; until it has timed a few requests it skips them ([`helios/src/scheduler/checkpoints.rs`](https://github.com/NVIDIA/hyperflare-inference/blob/8a887202a0ee55d456ddcf7510161e22865505bc/helios/src/scheduler/checkpoints.rs), "Unknown costs disable extras"). In a probe the first three new sessions after a start reused nothing and every later one reused the 4,683-token system prompt; raising `--scheduler-checkpoint-extra-work-fraction` from 0.05 to 1 changed nothing. This recipe's Flare saves those snapshots from the start, and warming changed its numbers by at most 1.4% (p ≥ 0.45). Hyperflare never evicted a snapshot in any run, so v1's eviction patch is not what it misses.
+
+So after a restart, the first few agent sessions on Hyperflare re-read their whole system prompt, and a fleet started all at once pays that together. Losing mixed prefill cost little: C was within 0.5% of B at 2, 4 and 8 agents and 6% slower at one agent (C was measured only on fresh engines).
+
+### One request at a time
+
+The frozen `flashnext-tf405` harness from v1: four prompts × three repeats × 400 tokens, and its long-prompt probes. Three runs per arm, each on a fresh engine; these prompts share no system prompt, so warming does not apply.
+
+| | Decode, tok/s | 32K-token prompt to first token | Target step | Accepted drafts per round |
+|---|---|---|---|---|
+| A, this recipe | 52.7 | 14.0 s | 57.8 ms | 2.00 of 3 |
+| B | 51.3 | 13.8 s | 58.7 ms | 1.96 of 3 |
+| C | 51.3 | 13.9 s | 58.6 ms | 1.97 of 3 |
+| B with 4 MTP drafts | 51.4 | 13.9 s | 64.7 ms | 2.24 of 4 |
+| **D, DFlash2** | **55.5** | **13.3 s** | 64.0 ms | 2.44 of 4 |
+
+D decodes 5% faster one request at a time (its runs 54.7 to 56.2 tok/s, A's 52.0 to 53.3). That is the drafter, not the extra draft: Hyperflare's MTP with four drafts gains acceptance (2.24 against 1.96 per round) but loses it again to a longer step, and decodes at 51.4 tok/s, the same as with three. At four drafts the same step time buys DFlash2 2.44.
+
+### Is the drafter held back by the NVFP4 weights?
+
+The DFlash2 drafter was trained for the BF16 model and evaluated on the FP8 one; its card reports 6% (GSM8K) to 17% (HumanEval) longer accepted runs than MTP. On these NVFP4 weights, on the harness's GSM8K and HumanEval prompts, one request at a time:
+
+| Accepted run per verification step | 3 drafts | 4 drafts | Accepted at draft position 1 / 2 / 3, 3 drafts |
+|---|---|---|---|
+| MTP (Hyperflare) | 3.31 | 3.76 | 0.91 / 0.77 / 0.63 |
+| DFlash2 | **3.55 (+7%)** | **4.12 (+10%)** | 0.94 / 0.85 / 0.76 |
+
+So the drafter keeps most of its advantage on NVFP4, and training an NVFP4-specific one has little to gain on prompts like these. Where it loses its edge is the agent workload: on the 6K- to 15K-token code-review sessions DFlash2 and MTP are accepted equally often. Its draft layers attend only to the last 2,048 accepted positions, which may be why; that was not tested.
+
+### Quality
+
+The same harness's 50 GSM8K and 20 HumanEval items, its own extraction and Docker sandbox, seeds 405 and 406:
+
+| | GSM8K (50) | HumanEval (20) |
+|---|---|---|
+| A, this recipe | 49, 49 | 11, 14 |
+| B, Hyperflare, MTP | 49, 48 | 13, 13 |
+| B with 4 MTP drafts | 49, 49 | 14, 14 |
+| D, DFlash2, 3 drafts | 49, 49 | 14, 11 |
+| D, DFlash2, 4 drafts | 49, 49 | 12, 14 |
+
+The same. Greedy runs are not bit-for-bit repeatable (between 6 and 14 of the 70 outputs were identical across the two seeds), so HumanEval moves by a few items between runs.
+
+### How it was run
+
+- One engine at a time, started fresh for every run and stopped after it; the GPU cooled to 50 °C (at least 90 s) between runs. Nothing else used the GPU; the driver records any other GPU process and none appeared.
+- GPU clocks at the default, not locked; every run records clocks, temperature and power every 2 s (graphics clock 2.39 to 2.42 GHz, no throttle reason recorded, at most 77 °C).
+- Arms interleaved (A B B A …) so drift over the day favours none. The agent workload reads its files from the same `ca1f960` checkout for every arm.
+- Acceptance is accepted draft tokens per request verification round from the engine's counters; target step is one-request decode time divided by verification rounds. Significance: exact two-sided permutation tests on per-run times.
+- **D's package was not one uninterrupted export.** Its export stopped on a 15 GB free-disk guard near the end; the package was then assembled from that export's saved preparation with Hyperflare's own publisher and verified with `flare inspect` (signatures and every prepared blob). The saved preparation is the DFlash2 one (`--speculative-method dflash2`, with the drafter's selector); against C only the draft-module weights, graphs and kernels differ. Details in [`results/v2/pins.json`](results/v2/pins.json).
+- The one-request runs' raw files were first saved under the harness directory (a relative path in `bench/v2/driver.py`, now fixed) and copied unchanged into `results/v2/raw` before scoring.
+
+## v1 results (October 2026, kept as measured)
 
 All runs on one GB10 with Qwen3.8-Flash-Next. This recipe's agent and single-request speed were measured Oct 28 and 29, 2026, and so were the Flare figures in the eight-agents card at the top; everything else, including quality, the other figures and TensorFold, Oct 22 to 24, when the recipe ran the previous Flare pin (1fd1f91) without runtime patches. TensorFold ran the published EXL3 4.05 recipe (`4.05bpw_h6_ng6`, MTP 6 at 0.70, BF16 KV, prompt kernels on).
 
@@ -221,6 +349,7 @@ Every model slot (main, subagents, background) points at the one model, so Claud
 ## Benchmarks
 
 - [`bench/agents_bench.py`](bench/agents_bench.py): the agent-session test above. `FLARE_SRC=~/flare-local-inference python3 bench/agents_bench.py --levels 1 8 --reps 1 --sampling-json '{"top_k": 1}' --out agents.json`. It draws its files from the Flare checkout made by `setup.sh`, so the workload is the same on any machine. It refuses to start while another process shares the GPU with the server (`--allow-busy-gpu` overrides), and flags any level during which one appears. Each turn also records its longest pause between tokens after the first (`max_gap_s`).
+- [`bench/v2`](bench/v2): the v2 comparison. `driver.py` runs one cell per fresh engine start (the agent test above, or the frozen harness's speed, long-prompt and quality suites) and writes a receipt per run with clocks, temperature, power, memory and engine counters; `sequence.sh` runs a plan of interleaved cells; `export_arm.sh` exports a Hyperflare arm with a free-disk guard; `arms.json` holds every arm's pins and flags; `score_v2.py`, `summarize.py` and `figures.py` turn the receipts into [`results/v2/summary.json`](results/v2/summary.json) and the v2 figures.
 - [`bench/live_metrics.py`](bench/live_metrics.py) and [`bench/meter_report.py`](bench/meter_report.py): a passive speed meter for a real session, sampling Flare's `/metrics` every 2 s, and its report.
 - Decode, long-prompt and quality figures come from the frozen `flashnext-tf405` harness of the TensorFold recipe: four speed prompts × three repeats, three long-prompt probes, 50 GSM8K and 20 HumanEval items.
 

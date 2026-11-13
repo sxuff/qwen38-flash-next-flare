@@ -10,6 +10,7 @@ export PATH=/usr/local/cuda/bin:$PATH
 CACHE=${FLARE_PACKAGE_CACHE:-$HOME/.cache/flare/packages}
 mkdir -p "$CACHE" "$(dirname "$PACKAGE_FILE")"
 free_gb=$(df -BG --output=avail "$CACHE" | tail -1 | tr -dc 0-9)
+echo "Profile $PROFILE: $FLARE_SRC at ${FLARE_COMMIT:0:12}, export flags: $EXPORT_FLAGS"
 if [ "$free_gb" -lt 120 ]; then
   echo "Only ${free_gb} GB free. The package needs about 100 GB besides the checkpoint; it fails near the end otherwise."
   exit 1
@@ -23,12 +24,21 @@ if nvidia-smi --query-compute-apps=pid --format=csv,noheader | grep -q .; then
   exit 1
 fi
 
+# A DFlash2 export fetches the drafter at the revision Hyperflare pins; check it against the recorded sha256 first.
+if [[ "$EXPORT_FLAGS" == *dflash2* ]]; then
+  "$FLARE_SRC/.venv/bin/hf" download "$DRAFTER" --revision "$DRAFTER_REVISION" config.json model.safetensors >/dev/null
+  drafter=$("$FLARE_SRC/.venv/bin/hf" download "$DRAFTER" --revision "$DRAFTER_REVISION" model.safetensors 2>/dev/null | tail -1)
+  got=$(sha256sum < "$drafter" | cut -d' ' -f1)
+  [ "$got" = "$DRAFTER_SHA256" ] || { echo "DFlash2 drafter sha256 is $got, expected $DRAFTER_SHA256"; exit 1; }
+  echo "DFlash2 drafter verified: $DRAFTER@${DRAFTER_REVISION:0:8} sha256 ${got:0:16}..."
+fi
+
 cd "$FLARE_SRC"
 log=$(mktemp)
 start=$(date +%s)
 # Extra arguments pass through, e.g. --reuse-weights to skip rehashing the weights of an earlier export.
-.venv/bin/ignition export qwen3.8-flash --gpus 0 --max-concurrency 8 --image-concurrency 4 \
-  --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill --verbose "$@" 2>&1 | tee "$log"
+# EXPORT_FLAGS comes from the profile in config.sh; flare-mtp-mixed is v1's export unchanged.
+.venv/bin/ignition export qwen3.8-flash --gpus 0 $EXPORT_FLAGS --verbose "$@" 2>&1 | tee "$log"
 status=${PIPESTATUS[0]}
 entry=$(sed -n 's/^Exported cache entry: //p' "$log" | tail -1)
 rm -f "$log"

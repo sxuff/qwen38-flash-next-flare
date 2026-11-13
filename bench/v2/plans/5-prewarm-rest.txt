@@ -1,0 +1,9 @@
+Bw agents 3 1 2 4 8
+D4w agents 3 1 2 4 8
+Aw agents 3 1 2 4 8
+Aw agents 4 1 8
+D4w agents 4 1 8
+Bw agents 4 1 8
+Bw agents 5 1 8
+Aw agents 5 1 8
+D4w agents 5 1 8

@@ -1,0 +1,20 @@
+Lets requests set top-k between 1 and 20 on the Qwen3.8 Flash Next package (top-k 1 is greedy). Upstream still fixes
+top-k and rejects temperature 0, so greedy decoding needs this range. Defaults stay at temperature 1.0, top-p 0.95,
+top-k 20. Same change as ../qwen38-topk-range.patch, regenerated for the newer file.
+
+Applies to NVIDIA/hyperflare-inference at 8a887202a0ee55d456ddcf7510161e22865505bc. The patched file is part of
+Hyperflare's Ignition and remains under the Apache License 2.0.
+
+diff --git a/ignition/recipes/qwen38/recipe.py b/ignition/recipes/qwen38/recipe.py
+index 914499e1..c4545274 100644
+--- a/ignition/recipes/qwen38/recipe.py
++++ b/ignition/recipes/qwen38/recipe.py
+@@ -83,7 +83,7 @@ RECIPE = Recipe(
+     name="qwen38", served_model_name="Qwen3.8-Flash-Next", prepare=prepare, usage=usage,
+     # Thinking defaults; bounds span thinking/instruct presets: https://huggingface.co/Qwen/Qwen3.8-Flash-Next#best-practices.
+     sampling_defaults=SamplingDefaults(temperature=1., top_p=.95, top_k=20,
+-        ranges={"temperature": SamplingRange(.7, 1.), "top_p": SamplingRange(.8, .95),
++        ranges={"temperature": SamplingRange(.7, 1.), "top_p": SamplingRange(.8, .95), "top_k": SamplingRange(1, 20),
+                 "presence_penalty": SamplingRange(0., 2.)}),
+     checkpoints=(Checkpoint(
+         alias="qwen3.8-flash", repository=MODEL_ID, revision=REVISION, architecture=ARCHITECTURE,

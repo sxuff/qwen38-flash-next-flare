@@ -12,6 +12,9 @@ REPO_DIR="$(pwd)"
 
 # ===================== recipe config (per repo) =============================
 RECIPE_NAME="qwen38-flash-next-flare"
+# --mode picks the measured configuration (README, "Which config should I run?"); read it before config.sh.
+_prev=""; for _a in "$@"; do case "$_a" in --mode=*) MODE=${_a#--mode=} ;; esac; [ "$_prev" = --mode ] && MODE=$_a; _prev=$_a; done
+export MODE=${MODE:-agents}
 . scripts/config.sh                              # FLARE_*, CHECKPOINT*, PACKAGE*, SERVED_NAME, HOST, PORT, SERVE_FLAGS ...
 export PATH=/usr/local/cuda/bin:$HOME/.cargo/bin:$HOME/.local/bin:$PATH   # same PATH as scripts/setup.sh:15
 MODELS_DIR="${MODELS_DIR:-$HOME/models}"         # unused: Flare reads the checkpoint from the Hugging Face cache
@@ -23,8 +26,12 @@ ENGINE_KIND=process
 CONTAINER_NAME=""
 READY_URL="http://127.0.0.1:${PORT}/health"      # clients/claude-code/claude-flare.sh:15
 READY_TIMEOUT=1200                               # README.md:175 says ready in about 30 s; a margin, not a measured value
-EXPECTED_LINE="83.0 tok/s total output with 8 concurrent agents (README.md:43,59; no receipt JSON in this repo)"
-RECEIPT_PATH="README.md (figure: results/figures/eight-agents.png)"
+case "$MODE" in   # measured values for the profile each mode selects (results/v2/summary.json, Nov 13, 2026)
+  agents) EXPECTED_LINE="88.3 tok/s total output with 8 concurrent agents, 48 turns in 132.4 s on a warmed engine (mean of 5 runs)" ;;
+  single) EXPECTED_LINE="38.3 tok/s with 1 agent, 6 turns in 39.9 s on a warmed engine (mean of 5 runs)" ;;
+esac
+[ "$PROFILE" = "$DEFAULT_PROFILE" ] || EXPECTED_LINE="profile $PROFILE: see results/v2/summary.json"
+RECEIPT_PATH="results/v2/summary.json (raw runs and pins: results/v2/raw, results/v2/pins.json)"
 
 # Checkpoint files at the pinned revision (scripts/config.sh:11-12). The repo pins the revision but
 # no per-file checksums, so these come from the Hub's own metadata at that revision (Hub check
@@ -89,14 +96,14 @@ memlock_ok() {
 
 flare_built() {
   [ -x "$FLARE_BIN" ] && [ "$(git -C "$FLARE_SRC" rev-parse HEAD 2>/dev/null)" = "$FLARE_COMMIT" ] || return 1
-  local p; for p in "$REPO_DIR"/patches/*.patch; do git -C "$FLARE_SRC" apply --reverse --check "$p" 2>/dev/null || return 1; done
+  local p; for p in "$REPO_DIR/$PATCH_DIR"/*.patch; do git -C "$FLARE_SRC" apply --reverse --check "$p" 2>/dev/null || return 1; done
 }
 
 engine_step() {
   if memlock_ok; then ok "locked memory: unlimited"
   else fail "locked-memory limit is $(ulimit -l) KB, not unlimited. See 'Prepare the host' in the README, then run ./run.sh from the console or OpenSSH (Tailscale SSH skips PAM limits)."; fi
   if flare_built; then ok "Flare built at ${FLARE_COMMIT:0:12} with the recipe patches: $FLARE_BIN"; return; fi
-  doit bash scripts/setup.sh   # pinned commit + patches/*.patch, uv sync --locked, cargo build --release
+  doit bash scripts/setup.sh   # pinned commit + $PATCH_DIR/*.patch, uv sync --locked, cargo build --release
 }
 
 # Each checkpoint file is checked against CHECKPOINT_FILES once; a marker then skips the hashing.
@@ -173,13 +180,15 @@ EOT
 CHECK=0; ACTION=run
 usage() {
   cat <<EOF
-Usage: ./run.sh [--check] [--stop] [--help]
+Usage: ./run.sh [--mode agents|single] [--check] [--stop] [--help]
 
 Sets up and launches ${RECIPE_NAME} on one NVIDIA GB10 (SM121).
 
   (no flag)  check the machine, build or pull the pinned engine, download the
              pinned weights, verify SHA-256, start the server, print a test.
              Safe to re-run: finished steps are skipped.
+  --mode M   agents (default): the fastest configuration for several agents at once;
+             single: the fastest for one request at a time. Now: --mode ${MODE} = profile ${PROFILE}.
   --check    print what would happen; change nothing.
   --stop     stop the server this script started.
   --help     show this text.
@@ -195,9 +204,13 @@ Expected: ${EXPECTED_LINE}
 Receipt:  ${RECEIPT_PATH}
 EOF
 }
+_prev=""
 for a in "$@"; do
+  if [ "$_prev" = --mode ]; then _prev=$a; continue; fi   # the value was read before config.sh, above
+  _prev=$a
   case "$a" in
     --check) CHECK=1 ;;
+    --mode|--mode=*) ;;
     --stop)  ACTION=stop ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $a (see ./run.sh --help)" >&2; exit 2 ;;

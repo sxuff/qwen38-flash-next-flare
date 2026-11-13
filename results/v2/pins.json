@@ -1,0 +1,161 @@
+{
+ "host": {
+  "machine": "ASUS Ascent GX10 (NVIDIA GB10, 128 GB unified memory)",
+  "gpu": "NVIDIA GB10, 12.1, 580.159.03",
+  "cuda_toolkit": "Build cuda_13.0.r13.0/compiler.36424714_0",
+  "kernel": "6.17.0-1026-nvidia",
+  "os": "Ubuntu 24.04.4 LTS",
+  "gpu_clocks": "default, not locked (application clock 2418 MHz); every run records clocks, temperature and power every 2 s",
+  "other_gpu_services": "dsv41-flash.service stopped for the whole study; no foreign GPU process recorded in any run"
+ },
+ "checkpoint": {
+  "repo": "nvidia/Qwen3.8-Flash-Next-FP4-Local",
+  "revision": "b9ce18a6887e18c089fdea8509a33e63429a3300",
+  "verification": "all 33 files match the per-file hashes pinned in run.sh (CHECKPOINT_FILES), checked Nov 12"
+ },
+ "drafter": {
+  "repo": "incoai/Qwen3.8-Flash-Next-DFlash2",
+  "revision": "a22a1744e85c17364dcc54a6a420af7135d4c7f6",
+  "model.safetensors": {
+   "bytes": 1206140008,
+   "sha256": "d6723f2a359eaf33ec0c95f22ae8edda896774020c552296a85e1913b4d3186f"
+  },
+  "config.json": {
+   "git_blob": "b370fddafd42756538af6e1cbe8273cab6e6d803",
+   "sha256": "2409575986f9ea24d455343eb469c0e6940def5edab1d1be503bb8eb4cc3b1b9"
+  },
+  "pinned_by": "ignition/recipes/qwen38/draft_config.py at hyperflare 8a887202",
+  "made_for": "model card base_model Qwen/Qwen3.8-Flash-Next, evaluated on Qwen/Qwen3.8-Flash-Next-FP8; not trained on the NVFP4 QAD target used here"
+ },
+ "engines": {
+  "flare": {
+   "repo": "NVIDIA/flare-local-inference",
+   "commit": "ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c",
+   "binary_sha256": "a853eff13c5e1cc46acdaaa058c49786a4a5ddbc5565874e6df34aca91f79c25",
+   "version": "flare 0.1.0"
+  },
+  "hyperflare": {
+   "repo": "NVIDIA/hyperflare-inference",
+   "commit": "8a887202a0ee55d456ddcf7510161e22865505bc",
+   "binary_sha256": "f924d7acd0326b73aa81d464d380d960514a5aa96e0560458565cf64f340e755",
+   "version": "flare 0.1.0",
+   "note": "flare-local-inference renamed (d2b5c5f, Nov 8); ca1f960 is 250 commits behind; the CLI moved from flare/ to flare-cli/"
+  }
+ },
+ "patches_sha256": {
+  "patches/flare-mixed-export-depth.patch": "306a7a81bdf7b13317f4374678fcd8e6fd5cf17713d6c8cb286dab5f2e5eef4c",
+  "patches/flare-oldest-first-eviction.patch": "eb3c115faaa887e4379bad1d6433998ce67305820311419b805ec3066ca46876",
+  "patches/flare-prefill-priority.patch": "09e5f1fbeafacfe2fc26d69a22eff9b70cba56c57654699343d7ded79a95b78c",
+  "patches/qwen38-topk-range.patch": "dc6d0ea93ba62f288a7473afb6f0697bfae836e8725940f6db2ca841800cb97d",
+  "patches/hyperflare/qwen38-topk-range.patch": "e4d3b9c2599e1e3c27f10383fbcaf2730fe0bd7def1ff9b54b8060d0b146e57d",
+  "patches/hyperflare/flare-prefill-priority.patch": "0e3e136b298f2da8b5478934cc339bc322c7ce3ef595835ac9d6046a9d09c1c3"
+ },
+ "packages": {
+  "A": {
+   "cache_entry": "gb10-tp1-202610271753",
+   "package_id": null,
+   "envelope_sha256": "8b8280e01e01dbfea3aceed4cb74193867f5e5c23b57eb100d9d33051678389c",
+   "signatures_verified": true,
+   "publisher_fingerprint": "3dbec82bafca0e45bf765aacf648136d45e6f42767b9560448ae9758de2cdcec",
+   "rebuild_speculative_method": null,
+   "abi_version": [
+    4
+   ],
+   "speculative_widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "speculative_token_capacity": 48,
+   "top_k_range": {
+    "min": 1,
+    "max": 20
+   },
+   "exported": "Oct 27, 2026 by v1 (~/flare-main-ab/export.log), reused unchanged"
+  },
+  "B": {
+   "cache_entry": "gb10-tp1-202611122141",
+   "package_id": null,
+   "envelope_sha256": "1289945473a3856211099ae85d67e96de1a020d61a2f30b0d75f9242b5a03151",
+   "signatures_verified": true,
+   "publisher_fingerprint": "3dbec82bafca0e45bf765aacf648136d45e6f42767b9560448ae9758de2cdcec",
+   "rebuild_speculative_method": null,
+   "abi_version": [
+    6
+   ],
+   "speculative_widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "speculative_token_capacity": 48,
+   "top_k_range": {
+    "min": 1,
+    "max": 20
+   },
+   "exported": "Nov 12 18:34 to 22:42 with bench/v2/export_arm.sh"
+  },
+  "C": {
+   "cache_entry": "gb10-tp1-202611122317",
+   "package_id": null,
+   "envelope_sha256": "5d47a501e3415a134590dd164b814c1764eb28f23aadad22145b942aef988653",
+   "signatures_verified": true,
+   "publisher_fingerprint": "3dbec82bafca0e45bf765aacf648136d45e6f42767b9560448ae9758de2cdcec",
+   "rebuild_speculative_method": null,
+   "abi_version": [
+    6
+   ],
+   "speculative_widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "speculative_token_capacity": 48,
+   "top_k_range": {
+    "min": 1,
+    "max": 20
+   },
+   "exported": "Nov 12 23:27 to Nov 13 00:18 with bench/v2/export_arm.sh"
+  },
+  "D": {
+   "cache_entry": "gb10-tp1-202611130606",
+   "package_id": null,
+   "envelope_sha256": "3a8a81eabeab0c27046c6e3cb56818471d4a28224ba8f27114a0d60dddc3ac1a",
+   "signatures_verified": true,
+   "publisher_fingerprint": "3dbec82bafca0e45bf765aacf648136d45e6f42767b9560448ae9758de2cdcec",
+   "rebuild_speculative_method": null,
+   "abi_version": [
+    6
+   ],
+   "speculative_widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "speculative_token_capacity": 56,
+   "top_k_range": {
+    "min": 1,
+    "max": 20
+   },
+   "exported": "Nov 13 00:20 with --speculative-method dflash2; stopped by a 15 GB free-disk guard near the end; the package was then assembled (Nov 13 06:06) from that export's saved preparation (rank-0.json and compiled forwards) with Hyperflare's native publisher and verified with flare inspect. It is not the output of one uninterrupted ignition export.",
+   "evidence_dflash2": "the saved preparation names dflash2 58 times and has DFlash2 selector entries; against C only the draft-module weight file, graphs and kernels differ. The runtime labels every learned draft source 'mtp' (heliopause/src/export/binding.rs)."
+  }
+ },
+ "workloads": {
+  "agents": "bench/agents_bench.py; files from flare-local-inference@ca1f960 + the v1 patches (and its .venv) for every arm",
+  "single_and_quality": "the flashnext-tf405 frozen harness used in v1; HumanEval sandbox image sha256:1f626b72bd7b20a470dae03ae18039049d50a0d496de20bf818b3b612c8699ee"
+ }
+}

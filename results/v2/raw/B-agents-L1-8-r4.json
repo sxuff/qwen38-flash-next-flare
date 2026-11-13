@@ -1,0 +1,105 @@
+{
+ "tag": "B-agents-L1-8-r4",
+ "arm": "B",
+ "arm_config": {
+  "description": "Hyperflare + MTP + mixed prefill, export and serving matched to A",
+  "engine": "NVIDIA/hyperflare-inference@8a887202a0ee55d456ddcf7510161e22865505bc",
+  "patches": [
+   "hyperflare/qwen38-topk-range.patch",
+   "hyperflare/flare-prefill-priority.patch"
+  ],
+  "flare_bin": "/home/sxuf/v2/hyperflare/flare-cli/target/release/flare",
+  "package": "/home/sxuf/.cache/flare/packages/models/nvidia_2FQwen3.8-Flash-Next-FP4-Local/gb10-tp1-202611122141",
+  "export_flags": "--gpus 0 --max-concurrency 8 --image-concurrency 4 --mtp-draft-tokens 5 --speculative-token-capacity 48 --mixed-prefill",
+  "serve_flags": "--no-mtp-adaptive-verification --mtp-draft-tokens 3 --scheduler-policy throughput",
+  "prefill_priority": 16
+ },
+ "workload": "agents",
+ "run": 4,
+ "note": "",
+ "started": "2026-11-13T09:04:53+0100",
+ "workload_src": "/home/sxuf/v2/flare-ca1f960",
+ "workload_src_commit": "ca1f960edbf67d624f2d2948d2c111e8a6c8eb3c",
+ "engine_version": "flare 0.1.0",
+ "gpu_before": {
+  "clock_gr_mhz": 208.0,
+  "clock_mem_mhz": "[N/A]",
+  "clock_sm_mhz": 208.0,
+  "temp_c": 50.0,
+  "power_w": 4.52,
+  "throttle": "0x0000000000000000",
+  "apps": [],
+  "mem_available_bytes": 122571087872
+ },
+ "ready_s": 27.0,
+ "turns_file": "B-agents-L1-8-r4-turns.json",
+ "workload_s": 204.5,
+ "exit_code": 0,
+ "workload_log": "warmup {'prompt_tokens': 4695, 'cached_tokens': 0, 'latency_s': 6.595444122096524}\nrep 1 level 1: 6 turns, wall 37.6s, output 35.5 tok/s\nrep 1 level 8: 48 turns, wall 147.3s, output 80.0 tok/s\nALL_DONE 54\n",
+ "metrics_delta": {
+  "flare_accepted_draft_tokens_total": 8270.0,
+  "flare_cache_reused_tokens_total": 413780.0,
+  "flare_draft_request_rounds_total": 4962.0,
+  "flare_generated_tokens_last_minute": 5683.0,
+  "flare_generated_tokens_total": 13303.0,
+  "flare_graph_launches_total{kind=\"init\"}": 6.0,
+  "flare_graph_launches_total{kind=\"mixed\"}": 10.0,
+  "flare_graph_launches_total{kind=\"prefill\"}": 180.0,
+  "flare_graph_launches_total{kind=\"restore\"}": 42.0,
+  "flare_graph_launches_total{kind=\"snapshot\"}": 52.0,
+  "flare_graph_launches_total{kind=\"speculative\"}": 1198.0,
+  "flare_prefill_tokens_total": 127293.0,
+  "flare_requests_completed_total": 55.0,
+  "flare_sampling_graph_launches_total{kind=\"mixed\",mode=\"general\"}": 10.0,
+  "flare_sampling_graph_launches_total{kind=\"prefill\",mode=\"general\"}": 180.0,
+  "flare_sampling_graph_launches_total{kind=\"speculative\",mode=\"general\"}": 1198.0,
+  "flare_speculative_accepted_drafts_total{batch=\"1\",width=\"4\"}": 991.0,
+  "flare_speculative_accepted_drafts_total{batch=\"2\",width=\"4\"}": 40.0,
+  "flare_speculative_accepted_drafts_total{batch=\"4\",width=\"4\"}": 603.0,
+  "flare_speculative_accepted_drafts_total{batch=\"8\",width=\"4\"}": 6589.0,
+  "flare_speculative_drafts_total{depth=\"1\",source=\"mtp\",outcome=\"accepted\"}": 3790.0,
+  "flare_speculative_drafts_total{depth=\"1\",source=\"mtp\",outcome=\"offered\"}": 4927.0,
+  "flare_speculative_drafts_total{depth=\"2\",source=\"mtp\",outcome=\"accepted\"}": 2617.0,
+  "flare_speculative_drafts_total{depth=\"2\",source=\"mtp\",outcome=\"offered\"}": 4899.0,
+  "flare_speculative_drafts_total{depth=\"3\",source=\"mtp\",outcome=\"accepted\"}": 1816.0,
+  "flare_speculative_drafts_total{depth=\"3\",source=\"mtp\",outcome=\"offered\"}": 4878.0,
+  "flare_speculative_offered_drafts_total{batch=\"1\",width=\"4\"}": 1713.0,
+  "flare_speculative_offered_drafts_total{batch=\"2\",width=\"4\"}": 65.0,
+  "flare_speculative_offered_drafts_total{batch=\"4\",width=\"4\"}": 1109.0,
+  "flare_speculative_offered_drafts_total{batch=\"8\",width=\"4\"}": 11817.0,
+  "flare_speculative_rounds_total{batch=\"1\",width=\"4\"}": 579.0,
+  "flare_speculative_rounds_total{batch=\"2\",width=\"4\"}": 11.0,
+  "flare_speculative_rounds_total{batch=\"4\",width=\"4\"}": 95.0,
+  "flare_speculative_rounds_total{batch=\"8\",width=\"4\"}": 513.0,
+  "flare_verification_draft_tokens_total": 14805.0,
+  "flare_verification_request_rounds_total": 4981.0
+ },
+ "system": {
+  "samples": 96,
+  "clock_gr_mhz": {
+   "min": 2385.0,
+   "median": 2405.0,
+   "max": 2411.0
+  },
+  "clock_mem_mhz": null,
+  "temp_c": {
+   "min": 52.0,
+   "median": 67.0,
+   "max": 72.0
+  },
+  "power_w": {
+   "min": 12.27,
+   "median": 34.34,
+   "max": 59.91
+  },
+  "throttle_reasons_seen": [
+   "0x0000000000000000"
+  ],
+  "peak_engine_gpu_mib": 103921,
+  "min_mem_available_gib": 6.22,
+  "foreign_gpu_processes": []
+ },
+ "engine_errors": 0,
+ "cooldown_s": 121,
+ "temp_after_cooldown_c": 50.0
+}
